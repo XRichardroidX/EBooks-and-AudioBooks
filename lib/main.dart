@@ -2,11 +2,20 @@ import 'package:ebooks_and_audiobooks/pages/e_books_page.dart';
 import 'package:ebooks_and_audiobooks/pages/login_page.dart';
 import 'package:ebooks_and_audiobooks/router.dart';
 import 'package:flutter/material.dart';
-import 'app_write_service.dart'; // Import the Appwrite configuration
+import 'package:firebase_core/firebase_core.dart'; // Import Firebase core
+import 'firebase_functions/user_login_session.dart';
+import 'firebase_options.dart'; // Import Firebase options for platform-specific configuration
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter environment is initialized
-  await appWriteId(); // Initialize Appwrite client
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+ // await appWriteId(); // Initialize Appwrite client
+
   runApp(const MyApp());
 }
 
@@ -45,7 +54,3 @@ class MainPage extends StatelessWidget {
     );
   }
 }
-
-
-
-

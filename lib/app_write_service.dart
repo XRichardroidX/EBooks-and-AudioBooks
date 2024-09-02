@@ -11,13 +11,3 @@ Future<void> appWriteId() async {
 
   account = Account(client);
 }
-
-// Function to check if user is logged in
-Future<bool> checkUserLoggedIn() async {
-  try {
-    await account!.get(); // Try to get the current user session
-    return true; // If successful, the user is logged in
-  } catch (e) {
-    return false; // If an error occurs, the user is not logged in
-  }
-}
