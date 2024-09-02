@@ -1,4 +1,8 @@
+import 'package:ebooks_and_audiobooks/pages/audio_books_page.dart';
+import 'package:ebooks_and_audiobooks/pages/category_page.dart';
+import 'package:ebooks_and_audiobooks/pages/download_page.dart';
 import 'package:ebooks_and_audiobooks/pages/e_books_page.dart';
+import 'package:ebooks_and_audiobooks/pages/payment_plan_page.dart';
 import 'package:go_router/go_router.dart';
 import 'main.dart';
 import 'pages/login_page.dart';
@@ -21,8 +25,24 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const SignupPage(),
     ),
     GoRoute(
+      path: '/category',
+      builder: (context, state) => const CategoryPage(),
+    ),
+    GoRoute(
       path: '/ebooks',
       builder: (context, state) => const EBooksPage(),
+    ),
+    GoRoute(
+      path: '/audiobooks',
+      builder: (context, state) => const AudioBooksPage(),
+    ),
+    GoRoute(
+      path: '/downloads',
+      builder: (context, state) => const DownloadPage(),
+    ),
+    GoRoute(
+      path: '/paymentplan',
+      builder: (context, state) => const PaymentPlanPage(),
     ),
   ],
   redirect: (context, state) {

@@ -3,10 +3,7 @@ import 'package:ebooks_and_audiobooks/widget/snack_bar_message.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../app_write_functions/app_write_auth.dart';
 import '../firebase_functions/google_auth.dart';
-import 'e_books_page.dart'; // Import the EBooksPage
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

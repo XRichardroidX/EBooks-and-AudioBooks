@@ -7,13 +7,7 @@ import '../widget/snack_bar_message.dart';
 Future<UserCredential?> signInWithGoogle(BuildContext context) async {
   try {
     // Step 1: Initialize the GoogleSignIn object
-    final GoogleSignIn googleSignIn = GoogleSignIn(
-      // clientId: '923225814244-9spkh8ps8np23h6u8kckrrbbn9htg8qf.apps.googleusercontent.com',
-      // scopes: <String>[
-      //   'email',
-      //   'https://www.googleapis.com/auth/contacts.readonly',
-      // ],
-    );
+    final GoogleSignIn googleSignIn = GoogleSignIn();
 
     // Step 2: Start the Google Sign-In process
     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
