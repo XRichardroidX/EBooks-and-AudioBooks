@@ -2,6 +2,7 @@ import 'package:ebooks_and_audiobooks/pages/e_books_page.dart';
 import 'package:ebooks_and_audiobooks/pages/login_page.dart';
 import 'package:ebooks_and_audiobooks/pages/menu_screens.dart';
 import 'package:ebooks_and_audiobooks/router.dart';
+import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase core
 import 'firebase_functions/user_login_session.dart';

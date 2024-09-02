@@ -2,6 +2,7 @@ import 'package:ebooks_and_audiobooks/pages/audio_books_page.dart';
 import 'package:ebooks_and_audiobooks/pages/category_page.dart';
 import 'package:ebooks_and_audiobooks/pages/download_page.dart';
 import 'package:ebooks_and_audiobooks/pages/e_books_page.dart';
+import 'package:ebooks_and_audiobooks/pages/menu_screens.dart';
 import 'package:ebooks_and_audiobooks/pages/payment_plan_page.dart';
 import 'package:go_router/go_router.dart';
 import 'main.dart';
@@ -27,6 +28,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/category',
       builder: (context, state) => const CategoryPage(),
+    ),
+    GoRoute(
+      path: '/menuscreens',
+      builder: (context, state) =>  MenuScreens(),
     ),
     GoRoute(
       path: '/ebooks',
