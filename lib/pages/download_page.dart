@@ -1,4 +1,3 @@
-import 'package:ebooks_and_audiobooks/app_write_functions/app_write_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../firebase_functions/logout.dart';
@@ -10,10 +9,6 @@ class DownloadPage extends StatefulWidget {
   @override
   State<DownloadPage> createState() => _DownloadPageState();
 }
-
-
-
-
 
 class _DownloadPageState extends State<DownloadPage> {
   @override
