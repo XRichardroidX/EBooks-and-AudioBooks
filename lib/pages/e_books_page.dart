@@ -26,8 +26,8 @@ class _EBooksPageState extends State<EBooksPage> {
     super.initState();
 
     client
-        .setEndpoint(AppWriteConstants.endpoint) // Your Appwrite endpoint
-        .setProject(AppWriteConstants.projectId); // Your project ID
+        .setEndpoint(Constants.endpoint) // Your Appwrite endpoint
+        .setProject(Constants.projectId); // Your project ID
 
     databases = Databases(client);
 
@@ -38,8 +38,8 @@ class _EBooksPageState extends State<EBooksPage> {
     try {
       // Fetch documents from Appwrite
       final response = await databases.listDocuments(
-        databaseId: AppWriteConstants.databaseId,
-        collectionId: '66d7210e001271490533', // Replace with your collection ID
+        databaseId: Constants.databaseId,
+        collectionId: Constants.ebooksCollectionId, // Replace with your collection ID
       );
 
       setState(() {
@@ -47,6 +47,8 @@ class _EBooksPageState extends State<EBooksPage> {
             .map((doc) => {
           'authorName': doc.data['authorName'], // Match with your schema field name
           'bookTitle': doc.data['bookTitle'], // Match with your schema field name
+          'bookCover': doc.data['bookCover'], // Match with your schema field name
+          'bookPdf': doc.data['bookPdf'], // Match with your schema field name
         })
             .toList();
         isLoading = false;
