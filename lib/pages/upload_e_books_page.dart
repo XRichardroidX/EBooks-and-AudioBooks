@@ -212,14 +212,34 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.textPrimary,
         onPressed: () async {
-          Map<String, String> megaResult = await uploadEBookToMegaStorage(context, bookCover!, selectedPdf!);
+          // Check if bookCover and selectedPdf are not null
+          if (bookCover == null || selectedPdf == null) {
+            showCustomSnackbar(context, 'Error', 'Please select an image and a PDF file.', AppColors.error);
+            return;
+          }
+
+          // Try to upload the eBook to pCloud
+          Map<String, String>? megaResult;
+          try {
+            megaResult = await uploadEBookToPCloud(context, bookCover!, selectedPdf!);
+          } catch (e) {
+            showCustomSnackbar(context, 'Upload Error', 'Failed to upload eBook: $e', AppColors.error);
+            return;
+          }
+
+          // Check if the result from pCloud is valid
+          if (megaResult == null || megaResult.isEmpty || megaResult['imageUrl'] == null || megaResult['pdfUrl'] == null) {
+            showCustomSnackbar(context, 'Upload Error', 'Failed to upload eBook. Please try again.', AppColors.error);
+            return;
+          }
+
           // Validate the form
           if (_formKey.currentState!.validate()) {
-            // If the form is valid, proceed with uploading the data
+            // If the form is valid, proceed with uploading the data to your database
             await uploadBookToDatabase(
-              _bookTitleController.text,
-              _authorNameController.text,
-              _bookSummaryController.text,
+                _bookTitleController.text,
+                _authorNameController.text,
+                _bookSummaryController.text,
                 megaResult['imageUrl']!,
                 megaResult['pdfUrl']!
             );
