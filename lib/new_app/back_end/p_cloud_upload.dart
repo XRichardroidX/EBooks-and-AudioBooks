@@ -6,7 +6,6 @@ import 'dart:io';
 
 Future<Map<String, String>> uploadEBookToPCloud(
     BuildContext context, Uint8List imageBytes, File pdfFile) async {
-
   const baseUrl = 'https://api.pcloud.com';
   const username = 'premium4oxide@gmail.com';
   const password = '@GwuCRhEY7a87RB';
@@ -46,7 +45,8 @@ Future<Map<String, String>> uploadEBookToPCloud(
 
   // Step 2: Create a folder named "EBooks"
   final createFolderResponse = await http.get(
-    Uri.parse('$baseUrl/createfolderifnotexists?auth=$authToken&name=EBooks&folderid=0'),
+    Uri.parse(
+        '$baseUrl/createfolderifnotexists?auth=$authToken&name=EBooks&folderid=0'),
   );
 
   if (createFolderResponse.statusCode != 200) {
@@ -83,7 +83,8 @@ Future<Map<String, String>> uploadEBookToPCloud(
     filename: 'image.jpg',
   ));
 
-  final imageUploadResponse = await http.Response.fromStream(await imageUploadRequest.send());
+  final imageUploadResponse =
+      await http.Response.fromStream(await imageUploadRequest.send());
 
   if (imageUploadResponse.statusCode != 200) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -96,7 +97,9 @@ Future<Map<String, String>> uploadEBookToPCloud(
   }
 
   final imageJson = jsonDecode(imageUploadResponse.body);
-  if (imageJson['result'] != 0 || imageJson['metadata'] == null || imageJson['metadata'].isEmpty) {
+  if (imageJson['result'] != 0 ||
+      imageJson['metadata'] == null ||
+      imageJson['metadata'].isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Image upload failed: ${imageUploadResponse.body}'),
@@ -106,7 +109,8 @@ Future<Map<String, String>> uploadEBookToPCloud(
     return {};
   }
 
-  final imageDownloadUrl = '$baseUrl/getfilelink?auth=$authToken&fileid=${imageJson['metadata'][0]['fileid']}';
+  final imageDownloadUrl =
+      '$baseUrl/getfilelink?auth=$authToken&fileid=${imageJson['metadata'][0]['fileid']}';
 
   // Step 4: Upload PDF to the folder
   final pdfUploadRequest = http.MultipartRequest(
@@ -119,7 +123,8 @@ Future<Map<String, String>> uploadEBookToPCloud(
     filename: pdfFile.path.split('/').last,
   ));
 
-  final pdfUploadResponse = await http.Response.fromStream(await pdfUploadRequest.send());
+  final pdfUploadResponse =
+      await http.Response.fromStream(await pdfUploadRequest.send());
 
   if (pdfUploadResponse.statusCode != 200) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -132,7 +137,9 @@ Future<Map<String, String>> uploadEBookToPCloud(
   }
 
   final pdfJson = jsonDecode(pdfUploadResponse.body);
-  if (pdfJson['result'] != 0 || pdfJson['metadata'] == null || pdfJson['metadata'].isEmpty) {
+  if (pdfJson['result'] != 0 ||
+      pdfJson['metadata'] == null ||
+      pdfJson['metadata'].isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('PDF upload failed: ${pdfUploadResponse.body}'),
@@ -142,7 +149,8 @@ Future<Map<String, String>> uploadEBookToPCloud(
     return {};
   }
 
-  final pdfDownloadUrl = '$baseUrl/getfilelink?auth=$authToken&fileid=${pdfJson['metadata'][0]['fileid']}';
+  final pdfDownloadUrl =
+      '$baseUrl/getfilelink?auth=$authToken&fileid=${pdfJson['metadata'][0]['fileid']}';
 
   return {
     'imageUrl': imageDownloadUrl,

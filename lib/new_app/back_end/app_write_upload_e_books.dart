@@ -6,7 +6,14 @@ import '../../constants/app_write_constants.dart';
 Client client = Client();
 Databases databases = Databases(client);
 
-Future<void> uploadBookToDatabase(String bookTitle, String authorName, String bookSummary, String bookCover, String bookPdf) async {
+Future<void> uploadBookToDatabase(
+    String bookTitle,
+    String authorName,
+    String bookSummary,
+    String bookCover,
+    String bookPdf,
+    String bookCategory
+    ) async {
   try {
     client
         .setEndpoint(Constants.endpoint) // Your Appwrite endpoint
@@ -17,7 +24,7 @@ Future<void> uploadBookToDatabase(String bookTitle, String authorName, String bo
     // Create a new document with the given details
     Document response = await databases.createDocument(
       databaseId: Constants.databaseId, // Replace with your database ID
-      collectionId: '66d7210e001271490533', // Replace with your collection ID
+      collectionId: Constants.ebooksCollectionId, // Replace with your collection ID
       documentId: 'unique()', // 'unique()' generates a unique document ID
       data: {
         'bookTitle': bookTitle, // Replace with your schema field name
@@ -25,6 +32,8 @@ Future<void> uploadBookToDatabase(String bookTitle, String authorName, String bo
         'bookSummary': bookSummary, // Replace with your schema field name
         'bookCover': bookCover, // Replace with your schema field name
         'bookPdf': bookPdf, // Replace with your schema field name
+        'bookCategory': bookCategory, // Replace with your schema field name
+        'timeStamp': DateTime.now().millisecondsSinceEpoch, // Replace with your schema field name
       },
       permissions: [
         Permission.read(Role.any()), // Allow any user to read the document

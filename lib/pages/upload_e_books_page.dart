@@ -5,8 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import '../new_app/back_end/app_write_functions.dart'; // Import your backend functions
-import '../new_app/back_end/mega_functions.dart';
+import '../new_app/back_end/app_write_upload_e_books.dart'; // Import your backend functions
+import '../new_app/back_end/p_cloud_upload.dart';
 import '../style/colors.dart';
 import '../widget/snack_bar_message.dart'; // Import your color styles
 
@@ -26,13 +26,32 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
   // Create a GlobalKey for the form
   final _formKey = GlobalKey<FormState>();
 
+// Define categories
+  final List<String> _categories = [
+    'Fiction',
+    'Non-fiction',
+    'Science',
+    'History',
+    'Fantasy',
+    'Biography',
+    'Mystery',        // New category
+    'Romance',        // New category
+    'Thriller',       // New category
+    'Self-help',      // New category
+    'Health',         // New category
+    'Children',       // New category
+    'Young Adult',    // New category
+    'Travel',         // New category
+    'Cookbooks',      // New category
+    'Poetry',         // New category
+    'Religion',       // New category
+    'Philosophy',     // New category
+    'Classic',        // New category
+  ];
 
-
-
+  String? _selectedCategory;
 
   Uint8List? bookCover;
-  TextEditingController writeUp = TextEditingController();
-  bool pickedImage = false;
   File? selectedPdf;
 
   Future<void> _selectBookCover(BuildContext context, bool imageFrom) async {
@@ -42,21 +61,19 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       if (imageFrom) {
         final XFile? image = await picker.pickImage(source: ImageSource.gallery);
         bookCover = await image!.readAsBytes();
-        pickedImage = true;
       } else {
         final XFile? photo = await picker.pickImage(source: ImageSource.camera);
         bookCover = await photo!.readAsBytes();
-        pickedImage = true;
       }
 
-      if (bookCover!.isNotEmpty){
-        pickedImage = true;
+      if (bookCover!.isNotEmpty) {
         setState(() {});
       }
     } on PlatformException catch (e) {
       showCustomSnackbar(context, 'Select Image', '$e', AppColors.error);
     }
   }
+
   Future<void> _selectPdf() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -68,10 +85,6 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       });
     }
   }
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -158,26 +171,63 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                     return null;
                   },
                 ),
-                //Todo Newly added feature
+                const SizedBox(height: 16.0), // Spacing between fields
+                // Dropdown for book category
+                DropdownButtonFormField<String>(
+                  dropdownColor: AppColors.backgroundPrimary,
+                  decoration: InputDecoration(
+                    labelText: 'Book Category',
+                    labelStyle: TextStyle(color: AppColors.textPrimary),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textHighlight),
+                    ),
+                  ),
+                  value: _selectedCategory,
+                  items: _categories.map((String category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(
+                        category,
+                        style: TextStyle(color: AppColors.textPrimary), // Text color set to white
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedCategory = newValue;
+                    });
+                  },
+                  style: TextStyle(color: AppColors.textPrimary), // Selected text color set to white
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a book category';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16.0), // Spacing between fields
                 Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton(
-                        onPressed: (){
+                        onPressed: () {
                           _selectBookCover(context, true);
                         },
                         child: const Text('Select Image from Gallery'),
                       ),
                       ElevatedButton(
-                        onPressed: (){
+                        onPressed: () {
                           _selectBookCover(context, false);
                         },
                         child: const Text('Take a picture'),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: (){
+                        onPressed: () {
                           _selectPdf();
                         },
                         child: const Text('Select PDF'),
@@ -200,7 +250,12 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                         ),
                       const SizedBox(height: 16),
                       if (selectedPdf != null)
-                        Text('Selected PDF: ${selectedPdf!.path}'),
+                        Text(
+                          'Selected PDF: ${selectedPdf!.path}',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -212,37 +267,33 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.textPrimary,
         onPressed: () async {
-          // Check if bookCover and selectedPdf are not null
           if (bookCover == null || selectedPdf == null) {
-            showCustomSnackbar(context, 'Error', 'Please select an image and a PDF file.', AppColors.error);
+            showCustomSnackbar(
+                context, 'Error', 'Please select an image and a PDF file.', AppColors.error);
             return;
           }
 
-          // Try to upload the eBook to pCloud
-          Map<String, String>? megaResult;
+          Map<String, String>? pCloudResult;
           try {
-            megaResult = await uploadEBookToPCloud(context, bookCover!, selectedPdf!);
+            pCloudResult = await uploadEBookToPCloud(context, bookCover!, selectedPdf!);
           } catch (e) {
             showCustomSnackbar(context, 'Upload Error', 'Failed to upload eBook: $e', AppColors.error);
             return;
           }
 
-          // Check if the result from pCloud is valid
-          if (megaResult == null || megaResult.isEmpty || megaResult['imageUrl'] == null || megaResult['pdfUrl'] == null) {
+          if (pCloudResult == null || pCloudResult.isEmpty || pCloudResult['imageUrl'] == null || pCloudResult['pdfUrl'] == null) {
             showCustomSnackbar(context, 'Upload Error', 'Failed to upload eBook. Please try again.', AppColors.error);
             return;
           }
 
-          // Validate the form
           if (_formKey.currentState!.validate()) {
-            // If the form is valid, proceed with uploading the data to your database
             await uploadBookToDatabase(
                 _bookTitleController.text,
                 _authorNameController.text,
                 _bookSummaryController.text,
-                megaResult['imageUrl']!,
-                megaResult['pdfUrl']!
-            );
+                pCloudResult['imageUrl']!,
+                pCloudResult['pdfUrl']!,
+                _selectedCategory ?? 'Uncategorized');
             Navigator.pop(context);
           }
         },
@@ -256,7 +307,6 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
 
   @override
   void dispose() {
-    // Clean up the controllers when the widget is disposed
     _bookTitleController.dispose();
     _authorNameController.dispose();
     _bookSummaryController.dispose();
