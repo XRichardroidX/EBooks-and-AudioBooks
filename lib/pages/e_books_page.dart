@@ -1,4 +1,3 @@
-// pages/profile_page.dart
 import 'package:ebooks_and_audiobooks/pages/upload_e_books_page.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
@@ -42,24 +41,31 @@ class _EBooksPageState extends State<EBooksPage> {
         collectionId: Constants.ebooksCollectionId, // Replace with your collection ID
       );
 
+      // Check if the widget is still mounted before calling setState
+      if (!mounted) return;
+
       setState(() {
         books = response.documents
             .map((doc) => {
           'authorName': doc.data['authorName'], // Match with your schema field name
           'bookTitle': doc.data['bookTitle'], // Match with your schema field name
-          'bookCover': doc.data['bookCover'], // Match with your schema field name
-          'bookPdf': doc.data['bookPdf'], // Match with your schema field name
+          'bookCover': doc.data['bookCover'], // Match with your schema field name (URL to image)
+          'bookPdf': doc.data['bookPdf'], // Match with your schema field name (PDF URL)
         })
             .toList();
         isLoading = false;
       });
     } catch (e) {
       print('Error fetching books: $e');
+      // Check if the widget is still mounted before calling setState
+      if (!mounted) return;
+
       setState(() {
         isLoading = false;
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -76,20 +82,60 @@ class _EBooksPageState extends State<EBooksPage> {
         height: MediaQuery.of(context).size.height,
         color: AppColors.backgroundPrimary,
         child: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : books.isEmpty
-            ? Center(child: Text("No books found."))
+            ? const Center(child: Text("No books found."))
             : ListView.builder(
           itemCount: books.length,
           itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(
-                books[index]['bookTitle'] ?? '',
-                style: TextStyle(color: AppColors.textPrimary),
+            return Card(
+              color: AppColors.cardBackground,
+              margin: const EdgeInsets.all(10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              subtitle: Text(
-                books[index]['authorName'] ?? '',
-                style: TextStyle(color: AppColors.textSecondary),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (books[index]['bookCover'] != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          books[index]['bookCover'],
+                          width: double.infinity,
+                          height: 180,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    const SizedBox(height: 10),
+                    Text(
+                      books[index]['bookTitle'] ?? 'Unknown Title',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'By: ${books[index]['authorName'] ?? 'Unknown Author'}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Implement PDF viewer or download functionality here
+                        // You can use the 'bookPdf' URL to open or download the PDF
+                      },
+                      child: const Text('Read PDF'),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -99,11 +145,13 @@ class _EBooksPageState extends State<EBooksPage> {
         backgroundColor: AppColors.textPrimary,
         onPressed: () {
           Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const UploadEBooksPage()));
+            context,
+            MaterialPageRoute(
+              builder: (context) => const UploadEBooksPage(),
+            ),
+          );
         },
-        child: Icon(
+        child: const Icon(
           Icons.upload,
           color: AppColors.textHighlight,
         ),

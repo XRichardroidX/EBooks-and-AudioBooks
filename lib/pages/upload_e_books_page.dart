@@ -1,14 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import '../new_app/back_end/app_write_upload_e_books.dart'; // Import your backend functions
-import '../new_app/back_end/p_cloud_upload.dart';
+import '../new_app/back_end/database_upload_e_books.dart';
 import '../style/colors.dart';
-import '../widget/snack_bar_message.dart'; // Import your color styles
 
 class UploadEBooksPage extends StatefulWidget {
   const UploadEBooksPage({super.key});
@@ -26,122 +23,174 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
   // Create a GlobalKey for the form
   final _formKey = GlobalKey<FormState>();
 
-// Define categories
-  final List<String> _categories = [
-    'Fiction',
-    'Non-fiction',
-    'Science',
-    'History',
-    'Fantasy',
-    'Biography',
-    'Mystery',        // New category
-    'Romance',        // New category
-    'Thriller',       // New category
-    'Self-help',      // New category
-    'Health',         // New category
-    'Children',       // New category
-    'Young Adult',    // New category
-    'Travel',         // New category
-    'Cookbooks',      // New category
-    'Poetry',         // New category
-    'Religion',       // New category
-    'Philosophy',     // New category
-    'Classic',        // New category
-  ];
-
+  // Define dropdown items for book type and category
+  String? _selectedType;
   String? _selectedCategory;
 
+  final List<String> _bookTypes = ['Novel', 'Spiritual', 'Self Development'];
+
+  final List<String> _novel = [
+    "Mystery",
+    "Thriller",
+    "Romance",
+    "Fantasy",
+    "Science Fiction",
+    "Historical Fiction",
+    "Adventure",
+    "Horror",
+    "Young Adult (YA)",
+    "Dystopian",
+    "Magical Realism",
+    "Psychological Thriller",
+    "Contemporary Fiction",
+    "Literary Fiction",
+    "Paranormal",
+    "Action",
+    "Gothic Fiction",
+    "Mythology & Retellings",
+    "Post-Apocalyptic",
+    "Cyberpunk"
+  ];
+
+  final List<String> _spiritual = [
+    'Christianity',
+    'Islam',
+    'Hinduism',
+    'Buddhism',
+    'Judaism',
+    'Laws of the Universe'
+  ];
+
+  final List<String> _self_development = [
+    "Personal Development",
+    "Mental Health",
+    "Success Mindset",
+    "Productivity",
+    "Financial Intelligence",
+    "Communication Skills",
+    "Emotional Intelligence",
+    "Creativity and Innovation",
+    "Leadership",
+    "Entrepreneurship",
+    "Spirituality"
+  ];
+
   Uint8List? bookCover;
-  File? selectedPdf;
+  PlatformFile? epubBook;
 
-  Future<void> _selectBookCover(BuildContext context, bool imageFrom) async {
-    try {
-      final ImagePicker picker = ImagePicker();
-
-      if (imageFrom) {
-        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-        bookCover = await image!.readAsBytes();
-      } else {
-        final XFile? photo = await picker.pickImage(source: ImageSource.camera);
-        bookCover = await photo!.readAsBytes();
-      }
-
-      if (bookCover!.isNotEmpty) {
-        setState(() {});
-      }
-    } on PlatformException catch (e) {
-      showCustomSnackbar(context, 'Select Image', '$e', AppColors.error);
+  Future<void> _selectBookCover(BuildContext context, bool fromGallery) async {
+    final ImagePicker picker = ImagePicker();
+    XFile? image = await picker.pickImage(source: fromGallery ? ImageSource.gallery : ImageSource.camera);
+    if (image != null) {
+      bookCover = await image.readAsBytes();
+      setState(() {});
     }
   }
 
-  Future<void> _selectPdf() async {
+
+
+  Future<void> _selectEpub() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf'],
+      allowedExtensions: ['epub'],
+      withData: false,  // Don't fetch bytes, just the file path
     );
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        selectedPdf = File(result.files.single.path!);
-      });
+
+    if (result != null && result.files.isNotEmpty) {
+
+      // Get the file path instead of bytes
+      final filePath = result.files.single.path;
+
+      if (filePath != null) {
+        // Extract the file name from the path
+        String fileBaseName = path.basename(filePath);
+
+        setState(() {
+          // Store the file name to display it later
+          epubBook = PlatformFile(name: fileBaseName, size: 0); // No need to store bytes, just the name
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.dividerColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
-        title: const Text(
-          'Upload E-Books',
+        iconTheme: IconThemeData(color: AppColors.textHighlight),
+        title: Text('Upload E-Books',
           style: TextStyle(
-            color: AppColors.textHighlight,
+              color: AppColors.textHighlight
           ),
         ),
       ),
       body: SingleChildScrollView(
         child: Container(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
           color: AppColors.backgroundPrimary,
-          padding: const EdgeInsets.all(16.0), // Add padding for better UI
+          padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Book Title
                 TextFormField(
                   controller: _bookTitleController,
+                  style: TextStyle(color: AppColors.textPrimary), // Text color
                   decoration: InputDecoration(
                     labelText: 'Book Title',
-                    labelStyle: TextStyle(color: AppColors.textPrimary),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary),
+                    labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textHighlight),
+                      borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
                     ),
                   ),
-                  style: TextStyle(color: AppColors.textPrimary),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a book title';
+                      return 'Please enter the book title';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 16.0), // Spacing between fields
+
+                const SizedBox(height: 16.0),
+
+                // Author Name
                 TextFormField(
                   controller: _authorNameController,
+                  style: TextStyle(color: AppColors.textPrimary), // Text color
                   decoration: InputDecoration(
                     labelText: 'Author Name',
-                    labelStyle: TextStyle(color: AppColors.textPrimary),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary),
+                    labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textHighlight),
+                      borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
                     ),
                   ),
-                  style: TextStyle(color: AppColors.textPrimary),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the author name';
@@ -149,21 +198,32 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16.0), // Spacing between fields
+                const SizedBox(height: 16.0),
+
+                // Book Summary
                 TextFormField(
                   controller: _bookSummaryController,
+                  style: TextStyle(color: AppColors.textPrimary), // Text color
                   decoration: InputDecoration(
                     labelText: 'Book Summary',
-                    labelStyle: TextStyle(color: AppColors.textPrimary),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary),
+                    labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textHighlight),
+                      borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
                     ),
                   ),
-                  style: TextStyle(color: AppColors.textPrimary),
-                  maxLines: 5, // Allow multiline input for summary
+                  maxLines: 4,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a book summary';
@@ -171,135 +231,231 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16.0), // Spacing between fields
-                // Dropdown for book category
+                const SizedBox(height: 16.0),
+                // Inside your _UploadEBooksPageState class, where the _selectedType is being set
                 DropdownButtonFormField<String>(
-                  dropdownColor: AppColors.backgroundPrimary,
+                  value: _selectedType,
                   decoration: InputDecoration(
-                    labelText: 'Book Category',
-                    labelStyle: TextStyle(color: AppColors.textPrimary),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary),
-                    ),
-                    focusedBorder: OutlineInputBorder(
+                    labelText: 'Book Type',
+                    filled: true, // Ensure the background color is applied
+                    fillColor: AppColors.backgroundPrimary, // Background color of the input field
+                    border: OutlineInputBorder(
                       borderSide: BorderSide(color: AppColors.textHighlight),
                     ),
                   ),
-                  value: _selectedCategory,
-                  items: _categories.map((String category) {
+                  style: TextStyle(color: AppColors.textPrimary), // Text color inside the field
+                  dropdownColor: AppColors.backgroundPrimary, // Background color of the dropdown menu
+                  items: _bookTypes.map((String type) {
                     return DropdownMenuItem<String>(
-                      value: category,
+                      value: type,
                       child: Text(
-                        category,
-                        style: TextStyle(color: AppColors.textPrimary), // Text color set to white
+                        type,
+                        style: TextStyle(color: AppColors.textPrimary), // Text color in the dropdown items
                       ),
                     );
                   }).toList(),
                   onChanged: (newValue) {
                     setState(() {
-                      _selectedCategory = newValue;
+                      _selectedType = newValue;
+                      _selectedCategory = null; // Reset the category when the type changes
                     });
                   },
-                  style: TextStyle(color: AppColors.textPrimary), // Selected text color set to white
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please select a book category';
+                      return 'Please select a book type';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 16.0), // Spacing between fields
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _selectBookCover(context, true);
-                        },
-                        child: const Text('Select Image from Gallery'),
+                const SizedBox(height: 16.0),
+                if (_selectedType == 'Novel')
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: '$_selectedType Category',
+                      filled: true,
+                      fillColor: AppColors.backgroundPrimary,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppColors.textHighlight),
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _selectBookCover(context, false);
-                        },
-                        child: const Text('Take a picture'),
+                    ),
+                    style: TextStyle(color: AppColors.textPrimary),
+                    dropdownColor: AppColors.backgroundPrimary,
+                    items: _novel.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(
+                          category,
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedCategory = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a book category';
+                      }
+                      return null;
+                    },
+                  )
+                else if (_selectedType == 'Spiritual')
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: '$_selectedType Category',
+                      filled: true,
+                      fillColor: AppColors.backgroundPrimary,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppColors.textHighlight),
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          _selectPdf();
-                        },
-                        child: const Text('Select PDF'),
+                    ),
+                    style: TextStyle(color: AppColors.textPrimary),
+                    dropdownColor: AppColors.backgroundPrimary,
+                    items: _spiritual.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(
+                          category,
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedCategory = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a book category';
+                      }
+                      return null;
+                    },
+                  )
+                else if (_selectedType == 'Self Development')
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategory,
+                      decoration: InputDecoration(
+                        labelText: '$_selectedType Category',
+                        filled: true,
+                        fillColor: AppColors.backgroundPrimary,
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.textHighlight),
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      if (bookCover != null)
-                        Center(
-                          child: Container(
-                            width: MediaQuery.of(context).size.width *
-                                0.3, // Image width
-                            height: MediaQuery.of(context).size.width *
-                                0.3, // Image height
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                fit: BoxFit.cover,
-                                image: MemoryImage(bookCover!),
+                      style: TextStyle(color: AppColors.textPrimary),
+                      dropdownColor: AppColors.backgroundPrimary,
+                      items: _self_development.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Text(
+                            category,
+                            style: TextStyle(color: AppColors.textPrimary),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedCategory = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a book category';
+                        }
+                        return null;
+                      },
+                    ),
+                const SizedBox(height: 16.0),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                      Column(
+                        children: [
+
+                          // Image Picker for Book Cover
+                          ElevatedButton(
+                            onPressed: () {
+                              _selectBookCover(context, true);
+                            },
+                            child: const Text(
+                                'Select Book Cover',
+                              style: TextStyle(
+                                color: AppColors.textHighlight,
                               ),
                             ),
                           ),
-                        ),
-                      const SizedBox(height: 16),
-                      if (selectedPdf != null)
-                        Text(
-                          'Selected PDF: ${selectedPdf!.path}',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
+                          if (bookCover != null)
+                            Image.memory(bookCover!, width: 100, height: 150),
+                        ],
+                      ),
+                    const SizedBox(width: 16.0),
+                    Column(
+                      children: [
+                        // ePub Picker for Book File
+                        ElevatedButton(
+                          onPressed: _selectEpub,
+                          child: const Text(
+                              'Select ePub File',
+                            style: TextStyle(
+                              color: AppColors.textHighlight,
+                            ),
                           ),
                         ),
-                    ],
-                  ),
+                        if (epubBook != null)
+                          Container(
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            child: Text(
+                              '${epubBook!.name} file selected', // Display the extracted file name
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 16.0),
+                      ],
+                    )
+
+                  ],
                 ),
+                const SizedBox(height: 16.0),
+                Center(
+                  child:                     // Submit Button
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        // Perform the upload action
+                        uploadBookToDatabase(
+                          context: context,
+                          bookTitle: _bookTitleController.text,
+                          authorName: _authorNameController.text,
+                          bookSummary: _bookSummaryController.text,
+                          bookCover: bookCover!,
+                          bookFile: epubBook!,
+                          bookType: _selectedType!,
+                          bookCategory: _selectedCategory!,
+                        );
+
+                        // Call your backend function here
+                      }
+                    },
+                    child: const Text(
+                        'Upload',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.backgroundPrimary,
+                      ),
+                    ),
+                  ),
+                )
               ],
             ),
           ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.textPrimary,
-        onPressed: () async {
-          if (bookCover == null || selectedPdf == null) {
-            showCustomSnackbar(
-                context, 'Error', 'Please select an image and a PDF file.', AppColors.error);
-            return;
-          }
-
-          Map<String, String>? pCloudResult;
-          try {
-            pCloudResult = await uploadEBookToPCloud(context, bookCover!, selectedPdf!);
-          } catch (e) {
-            showCustomSnackbar(context, 'Upload Error', 'Failed to upload eBook: $e', AppColors.error);
-            return;
-          }
-
-          if (pCloudResult == null || pCloudResult.isEmpty || pCloudResult['imageUrl'] == null || pCloudResult['pdfUrl'] == null) {
-            showCustomSnackbar(context, 'Upload Error', 'Failed to upload eBook. Please try again.', AppColors.error);
-            return;
-          }
-
-          if (_formKey.currentState!.validate()) {
-            await uploadBookToDatabase(
-                _bookTitleController.text,
-                _authorNameController.text,
-                _bookSummaryController.text,
-                pCloudResult['imageUrl']!,
-                pCloudResult['pdfUrl']!,
-                _selectedCategory ?? 'Uncategorized');
-            Navigator.pop(context);
-          }
-        },
-        child: const Icon(
-          Icons.upload,
-          color: AppColors.textHighlight,
         ),
       ),
     );
