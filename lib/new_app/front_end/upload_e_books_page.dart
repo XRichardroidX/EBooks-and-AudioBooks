@@ -4,8 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../new_app/back_end/database_upload_e_books.dart';
-import '../style/colors.dart';
+import '../back_end/database_upload_e_books.dart';
+import '../../style/colors.dart';
 
 class UploadEBooksPage extends StatefulWidget {
   const UploadEBooksPage({super.key});
@@ -93,25 +93,16 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['epub'],
-      withData: false,  // Don't fetch bytes, just the file path
+      withData: true,  // Fetch the file data (bytes)
     );
 
     if (result != null && result.files.isNotEmpty) {
-
-      // Get the file path instead of bytes
-      final filePath = result.files.single.path;
-
-      if (filePath != null) {
-        // Extract the file name from the path
-        String fileBaseName = path.basename(filePath);
-
-        setState(() {
-          // Store the file name to display it later
-          epubBook = PlatformFile(name: fileBaseName, size: 0); // No need to store bytes, just the name
-        });
-      }
+      setState(() {
+        epubBook = result.files.single;  // Store the file with its bytes
+      });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

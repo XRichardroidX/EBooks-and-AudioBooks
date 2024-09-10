@@ -12,7 +12,8 @@ class Constants {
 
 
 
-  static const String cloudStorageApiKey1 = '0f0702635emsh31af12d4712151dp140ae9jsnb0d8e74d02a2';
+  static const String cloudStorageBookId = '66e046190000af5c2178';
+  static const String cloudStorageBookCoverId = '66e04843002721f16c01';
 
   // Firebase Constants
   String userId = userIdFromFirebase; // Replace with your Firebase  user ID

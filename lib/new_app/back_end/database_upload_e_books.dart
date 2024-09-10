@@ -50,11 +50,11 @@ Future<void> uploadBookToDatabase({
         'bookSummary': bookSummary, // Replace with your schema field name
         'bookCoverUrl': bookCoverUrl, // Replace with your schema field name
         'bookUrl': bookUrl, // Replace with your schema field name
+        'bookCategory': bookCategory,
+        'timeStamp': '${DateTime.now().millisecondsSinceEpoch}', // Replace with your schema field name
         'numberOfPages': numberOfPages, // Replace with your schema field name
         'totalFileSize': totalFileSize,
         'bookType': bookType,
-        'bookCategory': bookCategory,
-        'timeStamp': '${DateTime.now().millisecondsSinceEpoch}', // Replace with your schema field name
       },
       permissions: [
         Permission.read(Role.any()), // Allow any user to read the document

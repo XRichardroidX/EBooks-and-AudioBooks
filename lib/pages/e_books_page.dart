@@ -1,9 +1,8 @@
-import 'package:ebooks_and_audiobooks/pages/upload_e_books_page.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart';
 import '../../constants/app_write_constants.dart';
+import '../new_app/front_end/upload_e_books_page.dart';
 
 class EBooksPage extends StatefulWidget {
   const EBooksPage({super.key});
@@ -49,7 +48,7 @@ class _EBooksPageState extends State<EBooksPage> {
             .map((doc) => {
           'authorName': doc.data['authorName'], // Match with your schema field name
           'bookTitle': doc.data['bookTitle'], // Match with your schema field name
-          'bookCover': doc.data['bookCover'], // Match with your schema field name (URL to image)
+          'bookCoverUrl': doc.data['bookCoverUrl'], // Match with your schema field name (URL to image)
           'bookPdf': doc.data['bookPdf'], // Match with your schema field name (PDF URL)
         })
             .toList();
@@ -99,11 +98,11 @@ class _EBooksPageState extends State<EBooksPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (books[index]['bookCover'] != null)
+                    if (books[index]['bookCoverUrl'] != null)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          books[index]['bookCover'],
+                          books[index]['bookCoverUrl'],
                           width: double.infinity,
                           height: 180,
                           fit: BoxFit.cover,
@@ -132,7 +131,7 @@ class _EBooksPageState extends State<EBooksPage> {
                         // Implement PDF viewer or download functionality here
                         // You can use the 'bookPdf' URL to open or download the PDF
                       },
-                      child: const Text('Read PDF'),
+                      child: const Text('Read Book'),
                     ),
                   ],
                 ),

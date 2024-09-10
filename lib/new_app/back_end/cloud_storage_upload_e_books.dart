@@ -1,8 +1,9 @@
 import 'dart:typed_data';
 import 'package:appwrite/appwrite.dart';
-import 'package:epubx/epubx.dart';  // For extracting the number of pages in the epub
+import 'package:epubx/epubx.dart';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';  // Import PlatformFile
+import 'package:file_picker/file_picker.dart';
+import '../../constants/app_write_constants.dart';
 
 Future<Map<String, dynamic>> uploadBookToCloudStorage({
   required BuildContext context,
@@ -15,21 +16,29 @@ Future<Map<String, dynamic>> uploadBookToCloudStorage({
     Storage storage = Storage(client);
 
     client
-        .setEndpoint('YOUR_APPWRITE_ENDPOINT') // Your Appwrite Endpoint
-        .setProject('YOUR_PROJECT_ID'); // Your Appwrite project ID
+        .setEndpoint(Constants.endpoint) // Your Appwrite Endpoint
+        .setProject(Constants.projectId); // Your Appwrite project ID
 
     // Upload ePub file to the "EBooks" bucket
     final epubUploadResponse = await storage.createFile(
-      bucketId: 'ebooks',  // Use the existing "EBooks" bucket ID
+      bucketId: Constants.cloudStorageBookId,  // "EBooks" bucket ID
       fileId: 'unique()',   // Generate a unique ID for the file
       file: InputFile.fromBytes(bytes: epubFile.bytes!, filename: epubFile.name),
+      permissions: [
+        Permission.read(Role.any()), // Public read
+        Permission.write(Role.any()), // Public write
+      ],
     );
 
     // Upload image to the "BookCover" bucket
     final imageUploadResponse = await storage.createFile(
-      bucketId: 'bookcovers',  // Use the existing "BookCover" bucket ID
+      bucketId: Constants.cloudStorageBookCoverId,  // "BookCover" bucket ID
       fileId: 'unique()',      // Generate a unique ID for the file
       file: InputFile.fromBytes(bytes: imageBytes, filename: 'imageName.jpg'),  // Change image name as needed
+      permissions: [
+        Permission.read(Role.any()), // Public read
+        Permission.write(Role.any()), // Public write
+      ],
     );
 
     // Calculate the total file size
@@ -40,17 +49,18 @@ Future<Map<String, dynamic>> uploadBookToCloudStorage({
     int numberOfPages = epubBook.Chapters?.length ?? 0;
 
     // Generate URLs for the uploaded files
-    String epubUrl = 'YOUR_APPWRITE_URL/storage/buckets/ebooks/files/${epubUploadResponse.$id}/view';
-    String imageUrl = 'YOUR_APPWRITE_URL/storage/buckets/bookcovers/files/${imageUploadResponse.$id}/view';
-
+    String epubUrl = '${Constants.endpoint}/storage/buckets/${Constants.cloudStorageBookId}/files/${epubUploadResponse.$id}/view?project=${Constants.projectId}';
+    String imageUrl = '${Constants.endpoint}/storage/buckets/${Constants.cloudStorageBookCoverId}/files/${imageUploadResponse.$id}/view?project=${Constants.projectId}';
+    Navigator.pop(context);
     // Return the required information as a map
     return {
       'bookCoverUrl': imageUrl,
       'bookUrl': epubUrl,
-      'numberOfPages': numberOfPages,
-      'totalFileSize': totalFileSize,
+      'numberOfPages': '${numberOfPages}',
+      'totalFileSize': '${totalFileSize}',
     };
   } catch (e) {
+    print('Error: $e');
     throw Exception('Failed to upload book and cover: $e');
   }
 }
