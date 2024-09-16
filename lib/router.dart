@@ -1,7 +1,7 @@
 import 'package:ebooks_and_audiobooks/pages/audio_books_page.dart';
 import 'package:ebooks_and_audiobooks/pages/category_page.dart';
 import 'package:ebooks_and_audiobooks/pages/download_page.dart';
-import 'package:ebooks_and_audiobooks/pages/e_books_page.dart';
+import 'package:ebooks_and_audiobooks/pages/e_book_pages/e_books_page.dart';
 import 'package:ebooks_and_audiobooks/pages/menu_screens.dart';
 import 'package:ebooks_and_audiobooks/pages/payment_plan_page.dart';
 import 'package:go_router/go_router.dart';

@@ -6,7 +6,7 @@ import 'package:ebooks_and_audiobooks/pages/payment_plan_page.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 
-import 'e_books_page.dart';
+import 'e_book_pages/e_books_page.dart';
 
 class MenuScreens extends StatefulWidget {
   int? currentPage;

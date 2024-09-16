@@ -1,8 +1,9 @@
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
-import '../../constants/app_write_constants.dart';
-import '../new_app/front_end/upload_e_books_page.dart';
+import '../../../constants/app_write_constants.dart';
+import '../../new_app/front_end/upload_e_books_page.dart';
+import 'epub_reader_page.dart';
 
 class EBooksPage extends StatefulWidget {
   const EBooksPage({super.key});
@@ -49,7 +50,7 @@ class _EBooksPageState extends State<EBooksPage> {
           'authorName': doc.data['authorName'], // Match with your schema field name
           'bookTitle': doc.data['bookTitle'], // Match with your schema field name
           'bookCoverUrl': doc.data['bookCoverUrl'], // Match with your schema field name (URL to image)
-          'bookPdf': doc.data['bookPdf'], // Match with your schema field name (PDF URL)
+          'bookUrl': doc.data['bookUrl'], // Match with your schema field name (PDF URL)
         })
             .toList();
         isLoading = false;
@@ -128,8 +129,13 @@ class _EBooksPageState extends State<EBooksPage> {
                     const SizedBox(height: 5),
                     ElevatedButton(
                       onPressed: () {
-                        // Implement PDF viewer or download functionality here
-                        // You can use the 'bookPdf' URL to open or download the PDF
+                        final bookEpubUrl = 'assets/epub/leader.epub'; // Adjusted path to match your assets
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EpubReaderPage(epubUrl: bookEpubUrl),
+                          ),
+                        );
                       },
                       child: const Text('Read Book'),
                     ),
