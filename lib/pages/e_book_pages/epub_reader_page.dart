@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:epub_view/epub_view.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,43 +15,66 @@ class EpubReaderPage extends StatefulWidget {
 
 class _EpubReaderPageState extends State<EpubReaderPage> {
   late EpubController _epubController;
-  final String _lastReadPageKey = 'lastReadPage';
+  late String _lastReadPageKey;
   int _lastReadPage = 0;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _lastReadPageKey = widget.epubUrl;
     _loadEpub();
   }
 
   Future<void> _loadEpub() async {
-    // Load EPUB file from the assets
-    final ByteData bytes = await rootBundle.load(widget.epubUrl);
-    final Uint8List list = bytes.buffer.asUint8List();
+    try {
+      // Fetch the EPUB file from the URL
+      final response = await http.get(Uri.parse(widget.epubUrl));
 
-    // Get the last read page from SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    _lastReadPage = prefs.getInt(_lastReadPageKey) ?? 0;
+      if (response.statusCode == 200) {
+        final Uint8List bytes = response.bodyBytes;
 
-    // Initialize the EpubController
-    _epubController = EpubController(
-      document: EpubDocument.openData(list),
-    );
+        // Get the last read page from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        _lastReadPage = prefs.getInt(_lastReadPageKey) ?? 0;
 
-    // Wait until the document is fully loaded
-    _epubController.document.then((_) {
+        // Initialize the EpubController with the downloaded bytes
+        _epubController = EpubController(
+          document: EpubDocument.openData(bytes),
+        );
+
+        // Listen for document loaded
+        _epubController.document.then((_) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          // Wait for 5 seconds before jumping to the last read page
+          Future.delayed(Duration(seconds: 2), () {
+            if (_lastReadPage > 0) {
+              // Ensure that the document is loaded and that _lastReadPage is within bounds
+              _epubController.jumpTo(index: _lastReadPage);
+            }
+          });
+        }).catchError((error) {
+          setState(() {
+            _isLoading = false;
+          });
+          print('Error loading EPUB document: $error');
+        });
+      } else {
+        // Handle error when fetching EPUB file
+        setState(() {
+          _isLoading = false;
+        });
+        print('Failed to load EPUB: ${response.statusCode}');
+      }
+    } catch (e) {
       setState(() {
         _isLoading = false;
       });
-
-      // Wait for 5 seconds before jumping to the last read page
-      Future.delayed(Duration(seconds: 2), () {
-        if (_lastReadPage > 0) {
-          _epubController.jumpTo(index: _lastReadPage);
-        }
-      });
-    });
+      print('Error fetching EPUB file: $e');
+    }
   }
 
   @override

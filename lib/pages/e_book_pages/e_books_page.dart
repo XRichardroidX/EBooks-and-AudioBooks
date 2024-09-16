@@ -129,16 +129,23 @@ class _EBooksPageState extends State<EBooksPage> {
                     const SizedBox(height: 5),
                     ElevatedButton(
                       onPressed: () {
-                        final bookEpubUrl = 'assets/epub/leader.epub'; // Adjusted path to match your assets
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EpubReaderPage(epubUrl: bookEpubUrl),
-                          ),
-                        );
+                        final bookEpubUrl = books[index]['bookUrl']; // Assuming 'bookPdf' is the EPUB URL
+                        if (bookEpubUrl != null || bookEpubUrl.endsWith('.epub')) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EpubReaderPage(epubUrl: bookEpubUrl),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Not available')),
+                          );
+                        }
                       },
                       child: const Text('Read Book'),
                     ),
+
                   ],
                 ),
               ),
