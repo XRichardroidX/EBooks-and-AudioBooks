@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:epub_view/epub_view.dart';
+import 'package:archive/archive.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:typed_data';
+import 'package:html/parser.dart' as html_parser;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EpubReaderPage extends StatefulWidget {
@@ -14,56 +16,101 @@ class EpubReaderPage extends StatefulWidget {
 }
 
 class _EpubReaderPageState extends State<EpubReaderPage> {
-  late EpubController _epubController;
   late String _lastReadPageKey;
-  int _lastReadPage = 0;
+  int _lastReadChapterIndex = 0;
+  double _lastScrollPosition = 0.0;
   bool _isLoading = true;
+  bool _isDarkMode = true;
+  String _bookTitle = 'Loading...';
+  String _currentChapterTitle = '';
+  String _extractedText = '';
+  List<String> _chapters = [];
+  Map<String, String> _chapterLinks = {};
+  int _totalChapters = 0;
+  int _currentChapterIndex = 0;
+  double _progress = 0.0;
+
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _contentKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _lastReadPageKey = widget.epubUrl;
+    _loadThemePreference();
     _loadEpub();
+    _scrollController.addListener(() {
+      _updateProgress();
+    });
+  }
+
+  @override
+  void dispose() {
+    _saveLastReadPosition();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+    });
+  }
+
+  Future<void> _saveThemePreference(bool isDarkMode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', isDarkMode);
   }
 
   Future<void> _loadEpub() async {
     try {
-      // Fetch the EPUB file from the URL
       final response = await http.get(Uri.parse(widget.epubUrl));
-
       if (response.statusCode == 200) {
         final Uint8List bytes = response.bodyBytes;
-
-        // Get the last read page from SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        _lastReadPage = prefs.getInt(_lastReadPageKey) ?? 0;
+        _lastReadChapterIndex = prefs.getInt('${_lastReadPageKey}_chapterIndex') ?? 0;
+        _lastScrollPosition = prefs.getDouble('${_lastReadPageKey}_scrollPosition') ?? 0.0;
 
-        // Initialize the EpubController with the downloaded bytes
-        _epubController = EpubController(
-          document: EpubDocument.openData(bytes),
-        );
+        final archive = ZipDecoder().decodeBytes(bytes);
+        final contentBuffer = StringBuffer();
+        bool contentFound = false;
 
-        // Listen for document loaded
-        _epubController.document.then((_) {
-          setState(() {
-            _isLoading = false;
-          });
-
-          // Wait for 5 seconds before jumping to the last read page
-          Future.delayed(Duration(seconds: 2), () {
-            if (_lastReadPage > 0) {
-              // Ensure that the document is loaded and that _lastReadPage is within bounds
-              _epubController.jumpTo(index: _lastReadPage);
+        for (final file in archive) {
+          if (file.isFile) {
+            try {
+              final content = utf8.decode(file.content);
+              if (file.name.endsWith('.xhtml') || file.name.endsWith('.html')) {
+                final document = html_parser.parse(content);
+                final text = document.body?.text ?? '';
+                if (text.isNotEmpty) {
+                  contentFound = true;
+                  contentBuffer.writeln(text);
+                }
+              } else if (file.name.endsWith('toc.ncx') || file.name.endsWith('content.opf')) {
+                _extractTOC(content);
+              }
+            } catch (e) {
+              print('Error decoding file ${file.name}: $e');
             }
-          });
-        }).catchError((error) {
-          setState(() {
-            _isLoading = false;
-          });
-          print('Error loading EPUB document: $error');
+          }
+        }
+
+        setState(() {
+          _bookTitle = contentFound ? 'Loaded EPUB' : 'No Content Found';
+          _extractedText = contentBuffer.toString();
+          _isLoading = false;
+
+          if (_totalChapters > 0) {
+            _currentChapterIndex = _lastReadChapterIndex;
+            _currentChapterTitle = _chapters[_currentChapterIndex];
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              await Future.delayed(Duration(milliseconds: 500));
+              _onChapterSelected(_currentChapterTitle, initialLoad: true);
+            });
+          }
         });
       } else {
-        // Handle error when fetching EPUB file
         setState(() {
           _isLoading = false;
         });
@@ -77,30 +124,214 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('E-Book Reader'),
-      ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : EpubView(
-        controller: _epubController,
-        onChapterChanged: (chapterViewValue) {
-          if (chapterViewValue != null) {
-            final currentPage = chapterViewValue.position;
-            // Save the current page index
-            _saveLastReadPage(currentPage.index);
-          }
-        },
-      ),
-    );
+  void _extractTOC(String content) {
+    final document = html_parser.parse(content);
+    final navMap = document.querySelector('navMap');
+    if (navMap != null) {
+      final navPoints = navMap.querySelectorAll('navPoint');
+      _totalChapters = navPoints.length;
+      for (var i = 0; i < navPoints.length; i++) {
+        final navPoint = navPoints[i];
+        final text = navPoint.querySelector('navLabel')?.text ?? 'No Title';
+        final contentFile = navPoint.querySelector('content')?.attributes['src'] ?? '';
+        _chapters.add(text);
+        _chapterLinks[text] = contentFile;
+      }
+      setState(() {});
+    }
   }
 
-  void _saveLastReadPage(int currentPage) async {
-    // Save the current page to SharedPreferences
+  Future<void> _onChapterSelected(String chapterTitle, {bool initialLoad = false}) async {
+    final link = _chapterLinks[chapterTitle];
+    if (link != null) {
+      setState(() {
+        _isLoading = true;
+        _currentChapterTitle = chapterTitle;
+      });
+
+      try {
+        final response = await http.get(Uri.parse(widget.epubUrl));
+        if (response.statusCode == 200) {
+          final Uint8List bytes = response.bodyBytes;
+          final archive = ZipDecoder().decodeBytes(bytes);
+
+          for (var i = 0; i < archive.length; i++) {
+            final file = archive[i];
+            if (file.isFile && file.name.endsWith(link)) {
+              final content = utf8.decode(file.content);
+              final document = html_parser.parse(content);
+              final text = document.body?.text ?? 'No content';
+              if (!initialLoad) {
+                _saveLastReadPosition();
+              }
+
+              setState(() {
+                _extractedText = text;
+                _isLoading = false;
+                _currentChapterIndex = _chapters.indexOf(chapterTitle);
+                _updateProgress();
+              });
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  Future.delayed(Duration(milliseconds: 500), () {
+                    _scrollController.jumpTo(_lastScrollPosition);
+                  });
+                }
+              });
+
+              break;
+            }
+          }
+        } else {
+          print('Failed to load EPUB: ${response.statusCode}');
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        print('Error fetching chapter content: $e');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _updateProgress() {
+    if (_extractedText.isNotEmpty) {
+      final totalHeight = _contentKey.currentContext?.size?.height ?? 1.0;
+      final scrollPosition = _scrollController.position.pixels;
+      final maxScrollExtent = _scrollController.position.maxScrollExtent;
+
+      if (maxScrollExtent > 0) {
+        setState(() {
+          _progress = (scrollPosition / maxScrollExtent).clamp(0.0, 1.0);
+        });
+      }
+    }
+  }
+
+  void _saveLastReadPosition() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_lastReadPageKey, currentPage);
+    await prefs.setInt('${_lastReadPageKey}_chapterIndex', _currentChapterIndex);
+    await prefs.setDouble('${_lastReadPageKey}_scrollPosition', _scrollController.position.pixels);
+  }
+
+  void _previousChapter() {
+    if (_currentChapterIndex > 0) {
+      _currentChapterIndex--;
+      _onChapterSelected(_chapters[_currentChapterIndex]);
+    }
+  }
+
+  void _nextChapter() {
+    if (_currentChapterIndex < _totalChapters - 1) {
+      _currentChapterIndex++;
+      _onChapterSelected(_chapters[_currentChapterIndex]);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: _isDarkMode
+          ? ThemeData.dark().copyWith(
+        textTheme: TextTheme(bodyMedium: TextStyle(color: Colors.white)),
+      )
+          : ThemeData.light().copyWith(
+        textTheme: TextTheme(bodyMedium: TextStyle(color: Colors.black)),
+      ),
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: Text(
+            _currentChapterTitle.isNotEmpty ? _currentChapterTitle : _bookTitle,
+            style: TextStyle(fontSize: 18),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                _isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isDarkMode = !_isDarkMode;
+                });
+                _saveThemePreference(_isDarkMode);
+              },
+            ),
+          ],
+        ),
+        drawer: Drawer(
+          child: Column(
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: _isDarkMode ? Colors.black : Colors.red,
+                ),
+                child: Center(
+                  child: Text(
+                    'Table of Contents',
+                    style: TextStyle(color: Colors.white, fontSize: 24),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _chapters.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(_chapters[index]),
+                      onTap: () {
+                        _onChapterSelected(_chapters[index]);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        body: _isLoading
+            ? Center(child: CircularProgressIndicator())
+            : Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: SelectableText(
+                  _extractedText,
+                  key: _contentKey,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: _isDarkMode ? Colors.white : Colors.black, // Text color based on dark mode
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back),
+                  onPressed: _previousChapter,
+                ),
+                Text(
+                  '${(_progress * 100).toStringAsFixed(0)}%',
+                  style: TextStyle(fontSize: 16),
+                ),
+                IconButton(
+                  icon: Icon(Icons.arrow_forward),
+                  onPressed: _nextChapter,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
