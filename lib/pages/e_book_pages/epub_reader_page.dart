@@ -346,6 +346,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                     key: _contentKey,
                     style: TextStyle(
                       fontSize: 17,
+                      wordSpacing: 2,
                       color: _isDarkMode ? Colors.white : Colors.black, // Text color based on dark mode
                     ),
                   ),
