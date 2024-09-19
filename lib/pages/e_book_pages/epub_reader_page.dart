@@ -6,6 +6,8 @@ import 'dart:typed_data';
 import 'package:html/parser.dart' as html_parser;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../style/colors.dart';
+
 class EpubReaderPage extends StatefulWidget {
   final String epubUrl;
 
@@ -85,7 +87,8 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                 final text = document.body?.text ?? '';
                 if (text.isNotEmpty) {
                   contentFound = true;
-                  contentBuffer.writeln(text);
+                  final formattedText = text.replaceAll('\n', '\n\n');
+                  contentBuffer.writeln(formattedText);
                 }
               } else if (file.name.endsWith('toc.ncx') || file.name.endsWith('content.opf')) {
                 _extractTOC(content);
@@ -161,23 +164,23 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
               final content = utf8.decode(file.content);
               final document = html_parser.parse(content);
               final text = document.body?.text ?? 'No content';
-              if (!initialLoad) {
-                _saveLastReadPosition();
-              }
-
               setState(() {
-                _extractedText = text;
+                _extractedText = text.replaceAll('\n', '\n\n');
                 _isLoading = false;
                 _currentChapterIndex = _chapters.indexOf(chapterTitle);
                 _updateProgress();
               });
 
+              if (!initialLoad) {
+                _saveLastReadPosition();
+              }
+
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_scrollController.hasClients) {
-                  Future.delayed(Duration(milliseconds: 500), () {
+                Future.delayed(Duration(milliseconds: 500), () {
+                  if (_scrollController.hasClients) {
                     _scrollController.jumpTo(_lastScrollPosition);
-                  });
-                }
+                  }
+                });
               });
 
               break;
@@ -245,10 +248,19 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(
-            _currentChapterTitle.isNotEmpty ? _currentChapterTitle : _bookTitle,
-            style: TextStyle(fontSize: 18),
+          backgroundColor: _isDarkMode ? AppColors.backgroundPrimary : AppColors.textPrimary,
+          title: Container(
+            child: Text(
+              _totalChapters > 0
+                  ? _currentChapterTitle.length > 40
+                  ? '${_currentChapterTitle.substring(0, 40)}...'
+                  : _currentChapterTitle
+                  : _bookTitle.length > 40
+                  ? '${_bookTitle.substring(0, 40)}...'
+                  : _bookTitle,
+              style: TextStyle(fontSize: 18),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           actions: [
             IconButton(
@@ -265,16 +277,41 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           ],
         ),
         drawer: Drawer(
+          width: MediaQuery.of(context).size.width * 0.8,
           child: Column(
             children: [
               DrawerHeader(
                 decoration: BoxDecoration(
-                  color: _isDarkMode ? Colors.black : Colors.red,
+                  color: _isDarkMode ? Colors.black : AppColors.buttonPrimary,
                 ),
                 child: Center(
-                  child: Text(
-                    'Table of Contents',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
+                  child: Stack(
+                    children: [
+                      Container(
+                        child: Text(
+                          '$_bookTitle',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 50,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        color: _isDarkMode ? Colors.black.withOpacity(0.5) : Colors.red.withOpacity(0.5),
+                      ),
+                      Center(
+                        child: Text(
+                          'Table of Contents',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -296,41 +333,61 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           ),
         ),
         body: _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: SelectableText(
-                  _extractedText,
-                  key: _contentKey,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: _isDarkMode ? Colors.white : Colors.black, // Text color based on dark mode
+            ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight,))
+            : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              child: Column(
+                        children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: SelectableText(
+                    _extractedText,
+                    key: _contentKey,
+                    style: TextStyle(
+                      fontSize: 17,
+                      color: _isDarkMode ? Colors.white : Colors.black, // Text color based on dark mode
+                    ),
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                child: Text(
+                  'Progress: ${(_progress * 100).toStringAsFixed(1)}%',
+                  style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _previousChapter,
+                      child: Text(
+                          'Previous',
+                        style: TextStyle(color: _isDarkMode ? AppColors.buttonPrimary : AppColors.buttonPrimary, fontSize: 16),
+
+                      ),
+                    ),
+                    Text(
+                      '${_currentChapterIndex + 1}/$_totalChapters chapters',
+                      style: TextStyle(fontSize: 15),
+                    ),
+                    ElevatedButton(
+                      onPressed: _nextChapter,
+                      child: Text(
+                          'Next',
+                        style: TextStyle(color: _isDarkMode ? AppColors.buttonPrimary : AppColors.buttonPrimary, fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+                        ],
+                      ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back),
-                  onPressed: _previousChapter,
-                ),
-                Text(
-                  '${(_progress * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(fontSize: 16),
-                ),
-                IconButton(
-                  icon: Icon(Icons.arrow_forward),
-                  onPressed: _nextChapter,
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

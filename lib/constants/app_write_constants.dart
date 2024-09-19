@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 String userIdFromFirebase = FirebaseAuth.instance.currentUser!.uid;
 
@@ -17,4 +18,18 @@ class Constants {
 
   // Firebase Constants
   String userId = userIdFromFirebase; // Replace with your Firebase  user ID
+}
+
+class Screen {
+  static late double width;
+  static late double height;
+  static late double drawer;
+
+  // Static method to initialize constants
+  static void initialize(BuildContext context) {
+    width = MediaQuery.of(context).size.width;
+    height = MediaQuery.of(context).size.height;
+
+    drawer = MediaQuery.of(context).size.width * 0.8;
+  }
 }
