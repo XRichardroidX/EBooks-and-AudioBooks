@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:html/parser.dart' as html_parser;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../style/colors.dart';
 
 class EpubReaderPage extends StatefulWidget {
@@ -28,6 +27,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   String _extractedText = '';
   List<String> _chapters = [];
   Map<String, String> _chapterLinks = {};
+  Map<String, String> _chapterContentCache = {}; // Cache for chapter contents
   int _totalChapters = 0;
   int _currentChapterIndex = 0;
   double _progress = 0.0;
@@ -75,7 +75,6 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         _lastScrollPosition = prefs.getDouble('${_lastReadPageKey}_scrollPosition') ?? 0.0;
 
         final archive = ZipDecoder().decodeBytes(bytes);
-        final contentBuffer = StringBuffer();
         bool contentFound = false;
 
         for (final file in archive) {
@@ -87,8 +86,8 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                 final text = document.body?.text ?? '';
                 if (text.isNotEmpty) {
                   contentFound = true;
-                  final formattedText = text.replaceAll('\n', '\n\n');
-                  contentBuffer.writeln(formattedText);
+                  String chapterTitle = file.name; // Extract chapter title from the file name or TOC
+                  _chapterContentCache[chapterTitle] = text.replaceAll('\n', '\n\n');
                 }
               } else if (file.name.endsWith('toc.ncx') || file.name.endsWith('content.opf')) {
                 _extractTOC(content);
@@ -101,7 +100,6 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
         setState(() {
           _bookTitle = contentFound ? 'Loaded EPUB' : 'No Content Found';
-          _extractedText = contentBuffer.toString();
           _isLoading = false;
 
           if (_totalChapters > 0) {
@@ -145,21 +143,37 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   }
 
   Future<void> _onChapterSelected(String chapterTitle, {bool initialLoad = false}) async {
-    final link = _chapterLinks[chapterTitle];
-    if (link != null) {
+    setState(() {
+      _currentChapterTitle = chapterTitle;
+      _isLoading = true;
+    });
+
+    // Check if the chapter content is already cached
+    if (_chapterContentCache.containsKey(chapterTitle)) {
       setState(() {
-        _isLoading = true;
-        _currentChapterTitle = chapterTitle;
+        _extractedText = _chapterContentCache[chapterTitle]!;
+        _isLoading = false;
+        _currentChapterIndex = _chapters.indexOf(chapterTitle);
       });
 
+      // Restore scroll position if not initial load
+      if (!initialLoad) {
+        _saveLastReadPosition();
+      }
+
+      return; // Content was cached, exit early
+    }
+
+    // Fetch chapter content if not cached
+    final link = _chapterLinks[chapterTitle];
+    if (link != null) {
       try {
         final response = await http.get(Uri.parse(widget.epubUrl));
         if (response.statusCode == 200) {
           final Uint8List bytes = response.bodyBytes;
           final archive = ZipDecoder().decodeBytes(bytes);
 
-          for (var i = 0; i < archive.length; i++) {
-            final file = archive[i];
+          for (var file in archive) {
             if (file.isFile && file.name.endsWith(link)) {
               final content = utf8.decode(file.content);
               final document = html_parser.parse(content);
@@ -168,35 +182,21 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                 _extractedText = text.replaceAll('\n', '\n\n');
                 _isLoading = false;
                 _currentChapterIndex = _chapters.indexOf(chapterTitle);
-                _updateProgress();
+                _chapterContentCache[chapterTitle] = _extractedText; // Cache the content
               });
 
               if (!initialLoad) {
                 _saveLastReadPosition();
               }
 
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Future.delayed(Duration(milliseconds: 500), () {
-                  if (_scrollController.hasClients) {
-                    _scrollController.jumpTo(_lastScrollPosition);
-                  }
-                });
-              });
-
-              break;
+              return; // Chapter content successfully loaded
             }
           }
         } else {
           print('Failed to load EPUB: ${response.statusCode}');
-          setState(() {
-            _isLoading = false;
-          });
         }
       } catch (e) {
         print('Error fetching chapter content: $e');
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -333,11 +333,11 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           ),
         ),
         body: _isLoading
-            ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight,))
+            ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
             : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0),
-              child: Column(
-                        children: [
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          child: Column(
+            children: [
               Expanded(
                 child: SingleChildScrollView(
                   controller: _scrollController,
@@ -347,7 +347,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                     style: TextStyle(
                       fontSize: 17,
                       wordSpacing: 2,
-                      color: _isDarkMode ? Colors.white : Colors.black, // Text color based on dark mode
+                      color: _isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                 ),
@@ -367,9 +367,8 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                     ElevatedButton(
                       onPressed: _previousChapter,
                       child: Text(
-                          'Previous',
+                        'Previous',
                         style: TextStyle(color: _isDarkMode ? AppColors.buttonPrimary : AppColors.buttonPrimary, fontSize: 16),
-
                       ),
                     ),
                     Text(
@@ -379,16 +378,16 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                     ElevatedButton(
                       onPressed: _nextChapter,
                       child: Text(
-                          'Next',
+                        'Next',
                         style: TextStyle(color: _isDarkMode ? AppColors.buttonPrimary : AppColors.buttonPrimary, fontSize: 16),
                       ),
                     ),
                   ],
                 ),
               ),
-                        ],
-                      ),
-            ),
+            ],
+          ),
+        ),
       ),
     );
   }
