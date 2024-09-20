@@ -5,12 +5,15 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:html/parser.dart' as html_parser;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../constants/app_write_constants.dart';
 import '../../style/colors.dart';
 
 class EpubReaderPage extends StatefulWidget {
   final String epubUrl;
+  final String bookTitle;
+  final String bookAuthor;
 
-  const EpubReaderPage({Key? key, required this.epubUrl}) : super(key: key);
+  const EpubReaderPage({Key? key, required this.epubUrl, required this.bookTitle, required this.bookAuthor}) : super(key: key);
 
   @override
   _EpubReaderPageState createState() => _EpubReaderPageState();
@@ -146,6 +149,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     setState(() {
       _currentChapterTitle = chapterTitle;
       _isLoading = true;
+      _progress = 0.0; // Reset progress to 0.0 when a new chapter is selected
     });
 
     // Check if the chapter content is already cached
@@ -201,6 +205,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     }
   }
 
+
   void _updateProgress() {
     if (_extractedText.isNotEmpty) {
       final totalHeight = _contentKey.currentContext?.size?.height ?? 1.0;
@@ -237,6 +242,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   @override
   Widget build(BuildContext context) {
+    Screen.initialize(context);
     return MaterialApp(
       theme: _isDarkMode
           ? ThemeData.dark().copyWith(
@@ -277,7 +283,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           ],
         ),
         drawer: Drawer(
-          width: MediaQuery.of(context).size.width * 0.8,
+          width: Screen.drawer,
           child: Column(
             children: [
               DrawerHeader(
@@ -288,17 +294,33 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                   child: Stack(
                     children: [
                       Container(
-                        child: Text(
-                          '$_bookTitle',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 50,
-                          ),
+                        child: Column(
+                          children: [
+                            Text(
+                              widget.bookTitle.length > 20
+                                  ? '${widget.bookTitle.substring(0, 20)}...'
+                                  : widget.bookTitle,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 50,
+                              ),
+                            ),
+                            Text(
+                              widget.bookAuthor.length > 20
+                                  ? '${widget.bookAuthor.substring(0, 20)}...'
+                                  : widget.bookAuthor,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       Container(
-                        width: MediaQuery.of(context).size.width * 0.8,
+                        width: Screen.drawer,
                         color: _isDarkMode ? Colors.black.withOpacity(0.5) : Colors.red.withOpacity(0.5),
                       ),
                       Center(

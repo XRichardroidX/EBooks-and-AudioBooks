@@ -134,7 +134,12 @@ class _EBooksPageState extends State<EBooksPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => EpubReaderPage(epubUrl: bookEpubUrl),
+                              builder: (context) =>
+                                  EpubReaderPage(
+                                    epubUrl: bookEpubUrl,
+                                    bookTitle: '${books[index]['bookTitle'] ?? 'Unknown Title'}',
+                                    bookAuthor: '${'By: ${books[index]['authorName'] ?? 'Unknown Author'}'}',
+                              ),
                             ),
                           );
                         } else {
