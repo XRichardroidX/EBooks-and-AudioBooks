@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../../constants/app_write_constants.dart';
 import 'cloud_storage_upload_e_books.dart';
+import 'epub_to_text.dart';
 
 // Initialize Appwrite Client and Databases service
 Client client = Client();
@@ -26,6 +27,18 @@ Future<void> uploadBookToDatabase({
         .setEndpoint(Constants.endpoint) // Your Appwrite endpoint
         .setProject(Constants.projectId); // Your project ID
 
+
+    Map<String, dynamic> epubToText = await epubToTextFromFile(bookFile);
+    String title = epubToText['title'];
+    List authors = epubToText['authors'];
+    List tableOfContents = epubToText['tableOfContents'];
+    String body = epubToText['body'];
+
+    print('-----------------------------title: $title--------------------------');
+    print('-----------------------------authors: $authors--------------------------');
+    print('-----------------------------tableOfContents: $tableOfContents--------------------------');
+    print('-----------------------------body: $body--------------------------');
+
     Map<String, dynamic> bookStorageUrl = await uploadBookToCloudStorage(
       context: context,
       imageBytes: bookCover,
@@ -33,7 +46,7 @@ Future<void> uploadBookToDatabase({
     );
 
     String bookCoverUrl = bookStorageUrl['bookCoverUrl'];
-    String bookUrl = bookStorageUrl['bookUrl'];
+  //  String bookUrl = bookStorageUrl['bookUrl'];
     String numberOfPages = bookStorageUrl['numberOfPages'];
     String totalFileSize = bookStorageUrl['totalFileSize'];
 
@@ -45,22 +58,25 @@ Future<void> uploadBookToDatabase({
       collectionId: Constants.ebooksCollectionId, // Replace with your collection ID
       documentId: 'unique()', // 'unique()' generates a unique document ID
       data: {
-        'bookTitle': bookTitle, // Replace with your schema field name
-        'authorName': authorName, // Replace with your schema field name
+        'bookTitle': title, // Replace with your schema field name
+        'authorNames': authors, // Replace with your schema field name
         'bookSummary': bookSummary, // Replace with your schema field name
         'bookCoverUrl': bookCoverUrl, // Replace with your schema field name
-        'bookUrl': bookUrl, // Replace with your schema field name
+        'bookBody': body, // Replace with your schema field name
         'bookCategory': bookCategory,
         'timeStamp': '${DateTime.now().millisecondsSinceEpoch}', // Replace with your schema field name
         'numberOfPages': numberOfPages, // Replace with your schema field name
         'totalFileSize': totalFileSize,
         'bookType': bookType,
+        'bookTableOfContent': tableOfContents
       },
       permissions: [
         Permission.read(Role.any()), // Allow any user to read the document
         Permission.write(Role.any()), // Allow any user to write to the document
       ],
     );
+
+   Navigator.pop(context);
 
     print('Document created successfully: ${response.data}');
   } catch (e) {

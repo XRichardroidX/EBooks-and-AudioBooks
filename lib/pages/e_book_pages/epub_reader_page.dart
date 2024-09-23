@@ -1,39 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:archive/archive.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:html/parser.dart' as html_parser;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_write_constants.dart';
 import '../../style/colors.dart';
 
-class EpubReaderPage extends StatefulWidget {
-  final String epubUrl;
+class BookReader extends StatefulWidget {
+  final String bookBody; // This will be the text content of the book
   final String bookTitle;
   final String bookAuthor;
 
-  const EpubReaderPage({Key? key, required this.epubUrl, required this.bookTitle, required this.bookAuthor}) : super(key: key);
+  const BookReader({
+    Key? key,
+    required this.bookBody,
+    required this.bookTitle,
+    required this.bookAuthor,
+  }) : super(key: key);
 
   @override
-  _EpubReaderPageState createState() => _EpubReaderPageState();
+  _BookReaderState createState() => _BookReaderState();
 }
 
-class _EpubReaderPageState extends State<EpubReaderPage> {
-  late String _lastReadPageKey;
-  int _lastReadChapterIndex = 0;
-  double _lastScrollPosition = 0.0;
+class _BookReaderState extends State<BookReader> {
   bool _isLoading = true;
   bool _isDarkMode = true;
-  String _bookTitle = 'Loading...';
-  String _currentChapterTitle = '';
   String _extractedText = '';
-  List<String> _chapters = [];
-  Map<String, String> _chapterLinks = {};
-  Map<String, String> _chapterContentCache = {}; // Cache for chapter contents
-  int _totalChapters = 0;
-  int _currentChapterIndex = 0;
+  List<String> _words = [];
+  int _currentPageIndex = 0;
   double _progress = 0.0;
+
+  double _fontSize = 17; // Default font size
+  int get _wordsPerPage => (2000 / _fontSize).round(); // Adjust words per page based on font size
 
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _contentKey = GlobalKey();
@@ -41,9 +36,9 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   @override
   void initState() {
     super.initState();
-    _lastReadPageKey = widget.epubUrl;
-    _loadThemePreference();
-    _loadEpub();
+    _loadPreferences();
+    _splitContentIntoWords();
+    _loadCurrentPage();
     _scrollController.addListener(() {
       _updateProgress();
     });
@@ -56,193 +51,96 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     super.dispose();
   }
 
-  Future<void> _loadThemePreference() async {
+  Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+      _fontSize = prefs.getDouble('fontSize') ?? 17;
+      _currentPageIndex = prefs.getInt('pageIndex') ?? 0;
     });
   }
 
-  Future<void> _saveThemePreference(bool isDarkMode) async {
+  Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', isDarkMode);
+    await prefs.setBool('isDarkMode', _isDarkMode);
+    await prefs.setDouble('fontSize', _fontSize);
+    await prefs.setInt('pageIndex', _currentPageIndex);
   }
 
-  Future<void> _loadEpub() async {
-    try {
-      final response = await http.get(Uri.parse(widget.epubUrl));
-      if (response.statusCode == 200) {
-        final Uint8List bytes = response.bodyBytes;
-        final prefs = await SharedPreferences.getInstance();
-        _lastReadChapterIndex = prefs.getInt('${_lastReadPageKey}_chapterIndex') ?? 0;
-        _lastScrollPosition = prefs.getDouble('${_lastReadPageKey}_scrollPosition') ?? 0.0;
-
-        final archive = ZipDecoder().decodeBytes(bytes);
-        bool contentFound = false;
-
-        for (final file in archive) {
-          if (file.isFile) {
-            try {
-              final content = utf8.decode(file.content);
-              if (file.name.endsWith('.xhtml') || file.name.endsWith('.html')) {
-                final document = html_parser.parse(content);
-                final text = document.body?.text ?? '';
-                if (text.isNotEmpty) {
-                  contentFound = true;
-                  String chapterTitle = file.name; // Extract chapter title from the file name or TOC
-                  _chapterContentCache[chapterTitle] = text.replaceAll('\n', '\n\n');
-                }
-              } else if (file.name.endsWith('toc.ncx') || file.name.endsWith('content.opf')) {
-                _extractTOC(content);
-              }
-            } catch (e) {
-              print('Error decoding file ${file.name}: $e');
-            }
-          }
-        }
-
-        setState(() {
-          _bookTitle = contentFound ? 'Loaded EPUB' : 'No Content Found';
-          _isLoading = false;
-
-          if (_totalChapters > 0) {
-            _currentChapterIndex = _lastReadChapterIndex;
-            _currentChapterTitle = _chapters[_currentChapterIndex];
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              await Future.delayed(Duration(milliseconds: 500));
-              _onChapterSelected(_currentChapterTitle, initialLoad: true);
-            });
-          }
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        print('Failed to load EPUB: ${response.statusCode}');
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      print('Error fetching EPUB file: $e');
-    }
-  }
-
-  void _extractTOC(String content) {
-    final document = html_parser.parse(content);
-    final navMap = document.querySelector('navMap');
-    if (navMap != null) {
-      final navPoints = navMap.querySelectorAll('navPoint');
-      _totalChapters = navPoints.length;
-      for (var i = 0; i < navPoints.length; i++) {
-        final navPoint = navPoints[i];
-        final text = navPoint.querySelector('navLabel')?.text ?? 'No Title';
-        final contentFile = navPoint.querySelector('content')?.attributes['src'] ?? '';
-        _chapters.add(text);
-        _chapterLinks[text] = contentFile;
-      }
-      setState(() {});
-    }
-  }
-
-  Future<void> _onChapterSelected(String chapterTitle, {bool initialLoad = false}) async {
+  void _splitContentIntoWords() {
+    _words = widget.bookBody.split(RegExp(r'\s+')).map((word) => word.trim()).toList();
+    _words.removeWhere((word) => word.isEmpty); // Remove empty words
     setState(() {
-      _currentChapterTitle = chapterTitle;
-      _isLoading = true;
-      _progress = 0.0; // Reset progress to 0.0 when a new chapter is selected
+      _isLoading = false;
+      _loadCurrentPage();
     });
+  }
 
-    // Check if the chapter content is already cached
-    if (_chapterContentCache.containsKey(chapterTitle)) {
-      setState(() {
-        _extractedText = _chapterContentCache[chapterTitle]!;
-        _isLoading = false;
-        _currentChapterIndex = _chapters.indexOf(chapterTitle);
-      });
-
-      // Restore scroll position if not initial load
-      if (!initialLoad) {
-        _saveLastReadPosition();
-      }
-
-      return; // Content was cached, exit early
-    }
-
-    // Fetch chapter content if not cached
-    final link = _chapterLinks[chapterTitle];
-    if (link != null) {
-      try {
-        final response = await http.get(Uri.parse(widget.epubUrl));
-        if (response.statusCode == 200) {
-          final Uint8List bytes = response.bodyBytes;
-          final archive = ZipDecoder().decodeBytes(bytes);
-
-          for (var file in archive) {
-            if (file.isFile && file.name.endsWith(link)) {
-              final content = utf8.decode(file.content);
-              final document = html_parser.parse(content);
-              final text = document.body?.text ?? 'No content';
-              setState(() {
-                _extractedText = text.replaceAll('\n', '\n\n');
-                _isLoading = false;
-                _currentChapterIndex = _chapters.indexOf(chapterTitle);
-                _chapterContentCache[chapterTitle] = _extractedText; // Cache the content
-              });
-
-              if (!initialLoad) {
-                _saveLastReadPosition();
-              }
-
-              return; // Chapter content successfully loaded
-            }
-          }
-        } else {
-          print('Failed to load EPUB: ${response.statusCode}');
-        }
-      } catch (e) {
-        print('Error fetching chapter content: $e');
+  void _loadCurrentPage() {
+    if (_words.isNotEmpty) {
+      int start = _currentPageIndex * _wordsPerPage;
+      int end = start + _wordsPerPage;
+      if (start < _words.length) {
+        setState(() {
+          _extractedText = _words.sublist(start, end.clamp(start, _words.length)).join(' ');
+        });
       }
     }
   }
-
 
   void _updateProgress() {
     if (_extractedText.isNotEmpty) {
-      final totalHeight = _contentKey.currentContext?.size?.height ?? 1.0;
-      final scrollPosition = _scrollController.position.pixels;
-      final maxScrollExtent = _scrollController.position.maxScrollExtent;
-
-      if (maxScrollExtent > 0) {
-        setState(() {
-          _progress = (scrollPosition / maxScrollExtent).clamp(0.0, 1.0);
-        });
-      }
+      final totalWords = _words.length;
+      final maxPages = (totalWords / _wordsPerPage).ceil();
+      setState(() {
+        _progress = (_currentPageIndex + 1) / maxPages;
+      });
     }
   }
 
   void _saveLastReadPosition() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('${_lastReadPageKey}_chapterIndex', _currentChapterIndex);
-    await prefs.setDouble('${_lastReadPageKey}_scrollPosition', _scrollController.position.pixels);
+    await _savePreferences();
   }
 
-  void _previousChapter() {
-    if (_currentChapterIndex > 0) {
-      _currentChapterIndex--;
-      _onChapterSelected(_chapters[_currentChapterIndex]);
+  void _previousPage() {
+    if (_currentPageIndex > 0) {
+      setState(() {
+        _currentPageIndex--;
+        _loadCurrentPage();
+        _updateProgress();
+      });
     }
   }
 
-  void _nextChapter() {
-    if (_currentChapterIndex < _totalChapters - 1) {
-      _currentChapterIndex++;
-      _onChapterSelected(_chapters[_currentChapterIndex]);
+  void _nextPage() {
+    int maxPages = (_words.length / _wordsPerPage).ceil();
+    if (_currentPageIndex < maxPages - 1) {
+      setState(() {
+        _currentPageIndex++;
+        _loadCurrentPage();
+        _updateProgress();
+      });
     }
+  }
+
+  void _increaseFontSize() {
+    setState(() {
+      _fontSize += 2; // Increase font size by 2
+      _loadCurrentPage(); // Reload current page after changing font size
+      _updateProgress(); // Update progress to reflect new state
+    });
+  }
+
+  void _decreaseFontSize() {
+    setState(() {
+      if (_fontSize > 10) _fontSize -= 2; // Decrease font size but not below 10
+      _loadCurrentPage(); // Reload current page after changing font size
+      _updateProgress(); // Update progress to reflect new state
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    Screen.initialize(context);
     return MaterialApp(
       theme: _isDarkMode
           ? ThemeData.dark().copyWith(
@@ -255,104 +153,42 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       home: Scaffold(
         appBar: AppBar(
           backgroundColor: _isDarkMode ? AppColors.backgroundPrimary : AppColors.textPrimary,
-          title: Container(
-            child: Text(
-              _totalChapters > 0
-                  ? _currentChapterTitle.length > 40
-                  ? '${_currentChapterTitle.substring(0, 40)}...'
-                  : _currentChapterTitle
-                  : _bookTitle.length > 40
-                  ? '${_bookTitle.substring(0, 40)}...'
-                  : _bookTitle,
-              style: TextStyle(fontSize: 18),
-              overflow: TextOverflow.ellipsis,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios),
+            onPressed: () {
+              Navigator.pop(context); // This will take the user back to the previous screen
+            },
+          ),
+          title: Text(
+            widget.bookTitle,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           actions: [
             IconButton(
-              icon: Icon(
-                _isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-              ),
+              icon: Icon(_isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
               onPressed: () {
                 setState(() {
                   _isDarkMode = !_isDarkMode;
                 });
-                _saveThemePreference(_isDarkMode);
+                _savePreferences(); // Save theme preference
               },
             ),
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: _increaseFontSize,
+            ),
+            Container(
+              child: Text('${_fontSize.ceil()}'),
+            ),
+            IconButton(
+              icon: Icon(Icons.remove),
+              onPressed: _decreaseFontSize,
+            ),
           ],
-        ),
-        drawer: Drawer(
-          width: Screen.drawer,
-          child: Column(
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: _isDarkMode ? Colors.black : AppColors.buttonPrimary,
-                ),
-                child: Center(
-                  child: Stack(
-                    children: [
-                      Container(
-                        child: Column(
-                          children: [
-                            Text(
-                              widget.bookTitle.length > 20
-                                  ? '${widget.bookTitle.substring(0, 20)}...'
-                                  : widget.bookTitle,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 50,
-                              ),
-                            ),
-                            Text(
-                              widget.bookAuthor.length > 20
-                                  ? '${widget.bookAuthor.substring(0, 20)}...'
-                                  : widget.bookAuthor,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: Screen.drawer,
-                        color: _isDarkMode ? Colors.black.withOpacity(0.5) : Colors.red.withOpacity(0.5),
-                      ),
-                      Center(
-                        child: Text(
-                          'Table of Contents',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _chapters.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(_chapters[index]),
-                      onTap: () {
-                        _onChapterSelected(_chapters[index]);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
         ),
         body: _isLoading
             ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
@@ -367,7 +203,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                     _extractedText,
                     key: _contentKey,
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: _fontSize,
                       wordSpacing: 2,
                       color: _isDarkMode ? Colors.white : Colors.black,
                     ),
@@ -377,7 +213,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2.0),
                 child: Text(
-                  'Progress: ${(_progress * 100).toStringAsFixed(1)}%',
+                  'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
                   style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
                 ),
               ),
@@ -387,22 +223,16 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ElevatedButton(
-                      onPressed: _previousChapter,
-                      child: Text(
-                        'Previous',
-                        style: TextStyle(color: _isDarkMode ? AppColors.buttonPrimary : AppColors.buttonPrimary, fontSize: 16),
-                      ),
+                      onPressed: _previousPage,
+                      child: Text('Previous', style: TextStyle(fontSize: 16)),
                     ),
                     Text(
-                      '${_currentChapterIndex + 1}/$_totalChapters chapters',
+                      'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
                       style: TextStyle(fontSize: 15),
                     ),
                     ElevatedButton(
-                      onPressed: _nextChapter,
-                      child: Text(
-                        'Next',
-                        style: TextStyle(color: _isDarkMode ? AppColors.buttonPrimary : AppColors.buttonPrimary, fontSize: 16),
-                      ),
+                      onPressed: _nextPage,
+                      child: Text('Next', style: TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),

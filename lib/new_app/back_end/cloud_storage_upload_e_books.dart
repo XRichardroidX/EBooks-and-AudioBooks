@@ -19,22 +19,11 @@ Future<Map<String, dynamic>> uploadBookToCloudStorage({
         .setEndpoint(Constants.endpoint) // Your Appwrite Endpoint
         .setProject(Constants.projectId); // Your Appwrite project ID
 
-    // Upload ePub file to the "EBooks" bucket
-    final epubUploadResponse = await storage.createFile(
-      bucketId: Constants.cloudStorageBookId,  // "EBooks" bucket ID
-      fileId: 'unique()',   // Generate a unique ID for the file
-      file: InputFile.fromBytes(bytes: epubFile.bytes!, filename: epubFile.name),
-      permissions: [
-        Permission.read(Role.any()), // Public read
-        Permission.write(Role.any()), // Public write
-      ],
-    );
-
     // Upload image to the "BookCover" bucket
     final imageUploadResponse = await storage.createFile(
       bucketId: Constants.cloudStorageBookCoverId,  // "BookCover" bucket ID
       fileId: 'unique()',      // Generate a unique ID for the file
-      file: InputFile.fromBytes(bytes: imageBytes, filename: 'imageName.jpg'),  // Change image name as needed
+      file: InputFile.fromBytes(bytes: imageBytes, filename: 'coverImage.jpg'),  // Change image name as needed
       permissions: [
         Permission.read(Role.any()), // Public read
         Permission.write(Role.any()), // Public write
@@ -48,19 +37,20 @@ Future<Map<String, dynamic>> uploadBookToCloudStorage({
     EpubBook epubBook = await EpubReader.readBook(epubFile.bytes!);
     int numberOfPages = epubBook.Chapters?.length ?? 0;
 
-    // Generate URLs for the uploaded files
-    String epubUrl = '${Constants.endpoint}/storage/buckets/${Constants.cloudStorageBookId}/files/${epubUploadResponse.$id}/view?project=${Constants.projectId}';
+    // Generate URL for the uploaded book cover
     String imageUrl = '${Constants.endpoint}/storage/buckets/${Constants.cloudStorageBookCoverId}/files/${imageUploadResponse.$id}/view?project=${Constants.projectId}';
-    Navigator.pop(context);
+
+    // Optionally pop the context
+    // Navigator.pop(context);
+    print('-----------------------------title-----------------------------');
     // Return the required information as a map
     return {
       'bookCoverUrl': imageUrl,
-      'bookUrl': epubUrl,
       'numberOfPages': '${numberOfPages}',
       'totalFileSize': '${totalFileSize}',
     };
   } catch (e) {
     print('Error: $e');
-    throw Exception('Failed to upload book and cover: $e');
+    throw Exception('Failed to upload book cover and calculate values: $e');
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../back_end/database_upload_e_books.dart';
 import '../../style/colors.dart';
+import '../back_end/epub_to_text.dart';
 
 class UploadEBooksPage extends StatefulWidget {
   const UploadEBooksPage({super.key});
@@ -19,6 +20,8 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
   final TextEditingController _bookTitleController = TextEditingController();
   final TextEditingController _authorNameController = TextEditingController();
   final TextEditingController _bookSummaryController = TextEditingController();
+  final TextEditingController _bookTableOfContentController = TextEditingController();
+  final TextEditingController _bookBodyController = TextEditingController();
 
   // Create a GlobalKey for the form
   final _formKey = GlobalKey<FormState>();
@@ -100,6 +103,16 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       setState(() {
         epubBook = result.files.single;  // Store the file with its bytes
       });
+
+      Map<String, dynamic> epubToText = await epubToTextFromFile(epubBook!);
+      String title = epubToText['title'];
+      List authors = epubToText['authors'];
+      List tableOfContents = epubToText['tableOfContents'];
+      String body = epubToText['body'];
+      _bookTitleController.text =  title;
+      _authorNameController.text = authors.toString();
+      _bookTableOfContentController.text = tableOfContents.toString();
+      _bookBodyController.text = body;
     }
   }
 
@@ -223,6 +236,71 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                   },
                 ),
                 const SizedBox(height: 16.0),
+                // Book Summary
+                TextFormField(
+                  controller: _bookTableOfContentController,
+                  style: TextStyle(color: AppColors.textPrimary), // Text color
+                  decoration: InputDecoration(
+                    labelText: 'Book Table ofcontent',
+                    labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
+                    ),
+                  ),
+                  maxLines: 6,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a book summary';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16.0),
+                // Book Summary
+                TextFormField(
+                  controller: _bookBodyController,
+                  style: TextStyle(color: AppColors.textPrimary), // Text color
+                  decoration: InputDecoration(
+                    labelText: 'Book Body',
+                    labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
+                    ),
+                  ),
+                  maxLines: 10,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a book summary';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16.0),
+
                 // Inside your _UploadEBooksPageState class, where the _selectedType is being set
                 DropdownButtonFormField<String>(
                   value: _selectedType,
@@ -417,7 +495,7 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                 Center(
                   child:                     // Submit Button
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         // Perform the upload action
                         uploadBookToDatabase(
@@ -430,7 +508,6 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                           bookType: _selectedType!,
                           bookCategory: _selectedCategory!,
                         );
-
                         // Call your backend function here
                       }
                     },

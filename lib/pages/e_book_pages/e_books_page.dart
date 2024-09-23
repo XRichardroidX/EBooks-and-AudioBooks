@@ -13,7 +13,6 @@ class EBooksPage extends StatefulWidget {
 }
 
 class _EBooksPageState extends State<EBooksPage> {
-  // Initialize Appwrite Client and Databases service
   final Client client = Client();
   late Databases databases;
 
@@ -35,29 +34,27 @@ class _EBooksPageState extends State<EBooksPage> {
 
   Future<void> fetchBooks() async {
     try {
-      // Fetch documents from Appwrite
       final response = await databases.listDocuments(
         databaseId: Constants.databaseId,
-        collectionId: Constants.ebooksCollectionId, // Replace with your collection ID
+        collectionId: Constants.ebooksCollectionId,
       );
 
-      // Check if the widget is still mounted before calling setState
       if (!mounted) return;
 
       setState(() {
-        books = response.documents
-            .map((doc) => {
-          'authorName': doc.data['authorName'], // Match with your schema field name
-          'bookTitle': doc.data['bookTitle'], // Match with your schema field name
-          'bookCoverUrl': doc.data['bookCoverUrl'], // Match with your schema field name (URL to image)
-          'bookUrl': doc.data['bookUrl'], // Match with your schema field name (PDF URL)
-        })
-            .toList();
+        books = response.documents.map((doc) {
+          return {
+            'authorNames': doc.data['authorNames'],
+            'bookTitle': doc.data['bookTitle'],
+            'bookCoverUrl': doc.data['bookCoverUrl'],
+            'bookBody': doc.data['bookBody'], // Assuming 'bookBody' holds the text content
+            'bookContent': doc.data['bookContent'],
+          };
+        }).toList();
         isLoading = false;
       });
     } catch (e) {
       print('Error fetching books: $e');
-      // Check if the widget is still mounted before calling setState
       if (!mounted) return;
 
       setState(() {
@@ -65,7 +62,6 @@ class _EBooksPageState extends State<EBooksPage> {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +116,7 @@ class _EBooksPageState extends State<EBooksPage> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      'By: ${books[index]['authorName'] ?? 'Unknown Author'}',
+                      'By: ${(books[index]['authorNames'] as List<dynamic>).join(', ') ?? 'Unknown Author'}',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppColors.textSecondary,
@@ -129,16 +125,15 @@ class _EBooksPageState extends State<EBooksPage> {
                     const SizedBox(height: 5),
                     ElevatedButton(
                       onPressed: () {
-                        final bookEpubUrl = books[index]['bookUrl']; // Assuming 'bookPdf' is the EPUB URL
-                        if (bookEpubUrl != null || bookEpubUrl.endsWith('.epub')) {
+                        final bookContent = books[index]['bookBody']; // Use text content directly
+                        if (bookContent != null) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  EpubReaderPage(
-                                    epubUrl: bookEpubUrl,
-                                    bookTitle: '${books[index]['bookTitle'] ?? 'Unknown Title'}',
-                                    bookAuthor: '${'By: ${books[index]['authorName'] ?? 'Unknown Author'}'}',
+                              builder: (context) => BookReader(
+                                bookTitle: books[index]['bookTitle'] ?? 'Unknown Title',
+                                bookAuthor: (books[index]['authorNames'] as List<dynamic>).join(', ') ?? 'Unknown Author',
+                                bookBody: bookContent ?? 'Empty',
                               ),
                             ),
                           );
@@ -150,7 +145,6 @@ class _EBooksPageState extends State<EBooksPage> {
                       },
                       child: const Text('Read Book'),
                     ),
-
                   ],
                 ),
               ),
