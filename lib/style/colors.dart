@@ -23,7 +23,7 @@ class AppColors {
   static const Color backgroundOverlay = Color(0x88000000);  // Semi-transparent black for overlays
 
   // Divider or Border Colors
-  static const Color dividerColor = Color(0xFF333333);  // Slate Gray for dividers or borders
+  static const Color dividerColor = Color(0xFF808080);  // Slate Gray for dividers or borders
 
   // Additional Colors
   static const Color cardBackground = Color(0xFF1E1E1E); // Dark gray for card backgrounds

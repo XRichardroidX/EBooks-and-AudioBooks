@@ -28,7 +28,7 @@ class _BookReaderState extends State<BookReader> {
   double _progress = 0.0;
 
   double _fontSize = 17; // Default font size
-  int get _wordsPerPage => (2000 / _fontSize).round(); // Adjust words per page based on font size
+  int get _wordsPerPage => (1500 / _fontSize).round(); // Adjust words per page based on font size
 
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _contentKey = GlobalKey();
@@ -193,7 +193,7 @@ class _BookReaderState extends State<BookReader> {
         body: _isLoading
             ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
             : Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 50),
           child: Column(
             children: [
               Expanded(
