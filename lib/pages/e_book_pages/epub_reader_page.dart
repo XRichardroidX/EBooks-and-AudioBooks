@@ -56,7 +56,7 @@ class _BookReaderState extends State<BookReader> {
     setState(() {
       _isDarkMode = prefs.getBool('isDarkMode') ?? false;
       _fontSize = prefs.getDouble('fontSize') ?? 17;
-      _currentPageIndex = prefs.getInt('pageIndex') ?? 0;
+      _currentPageIndex = prefs.getInt('${widget.bookTitle}_pageIndex') ?? 0;
     });
   }
 
@@ -64,7 +64,7 @@ class _BookReaderState extends State<BookReader> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDarkMode', _isDarkMode);
     await prefs.setDouble('fontSize', _fontSize);
-    await prefs.setInt('pageIndex', _currentPageIndex);
+    await prefs.setInt('${widget.bookTitle}_pageIndex', _currentPageIndex);
   }
 
   void _splitContentIntoWords() {

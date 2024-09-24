@@ -1,6 +1,8 @@
+import 'package:ebooks_and_audiobooks/pages/category_page.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
+import 'package:go_router/go_router.dart';
 import '../../../constants/app_write_constants.dart';
 import '../../new_app/front_end/upload_e_books_page.dart';
 import 'epub_reader_page.dart';
@@ -24,8 +26,8 @@ class _EBooksPageState extends State<EBooksPage> {
     super.initState();
 
     client
-        .setEndpoint(Constants.endpoint) // Your Appwrite endpoint
-        .setProject(Constants.projectId); // Your project ID
+        .setEndpoint(Constants.endpoint)
+        .setProject(Constants.projectId);
 
     databases = Databases(client);
 
@@ -47,8 +49,8 @@ class _EBooksPageState extends State<EBooksPage> {
             'authorNames': doc.data['authorNames'],
             'bookTitle': doc.data['bookTitle'],
             'bookCoverUrl': doc.data['bookCoverUrl'],
-            'bookBody': doc.data['bookBody'], // Assuming 'bookBody' holds the text content
-            'bookContent': doc.data['bookContent'],
+            'bookBody': doc.data['bookBody'],
+            'bookSummary': doc.data['bookSummary'],
           };
         }).toList();
         isLoading = false;
@@ -125,21 +127,16 @@ class _EBooksPageState extends State<EBooksPage> {
                     const SizedBox(height: 5),
                     ElevatedButton(
                       onPressed: () {
-                        final bookContent = books[index]['bookBody']; // Use text content directly
+                        final bookContent = books[index]['bookBody'];
                         if (bookContent != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BookReader(
-                                bookTitle: books[index]['bookTitle'] ?? 'Unknown Title',
-                                bookAuthor: (books[index]['authorNames'] as List<dynamic>).join(', ') ?? 'Unknown Author',
-                                bookBody: bookContent ?? 'Empty',
-                              ),
-                            ),
+                          context.push(
+                            '/ebookdetails/${Uri.encodeComponent(books[index]['bookTitle'] ?? 'Unknown Title')}/${Uri.encodeComponent((books[index]['authorNames'] as List<dynamic>).join(', ') ?? 'Unknown Author')}/${Uri.encodeComponent(books[index]['bookCoverUrl'] ?? '')}/${Uri.encodeComponent(books[index]['bookSummary'] ?? '')}',
+                            extra: bookContent,
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Not available')),
+                            const SnackBar(
+                                content: Text('Not available')),
                           );
                         }
                       },

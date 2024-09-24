@@ -1,6 +1,7 @@
 import 'package:ebooks_and_audiobooks/pages/audio_books_page.dart';
 import 'package:ebooks_and_audiobooks/pages/category_page.dart';
 import 'package:ebooks_and_audiobooks/pages/download_page.dart';
+import 'package:ebooks_and_audiobooks/pages/e_book_pages/book_details_page.dart';
 import 'package:ebooks_and_audiobooks/pages/e_book_pages/e_books_page.dart';
 import 'package:ebooks_and_audiobooks/pages/menu_screens.dart';
 import 'package:ebooks_and_audiobooks/pages/payment_plan_page.dart';
@@ -28,6 +29,24 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/category',
       builder: (context, state) => const CategoryPage(),
+    ),
+    GoRoute(
+      path: '/ebookdetails/:bookTitle/:bookAuthor/:bookCover/:bookSummary',
+      builder: (context, state) {
+        final bookTitle = state.pathParameters['bookTitle'] ?? 'Unknown Title';
+        final bookAuthor = state.pathParameters['bookAuthor'] ?? 'Unknown Author';
+        final bookCover = state.pathParameters['bookCover'] ?? '';
+        final bookSummary = state.pathParameters['bookSummary'] ?? '';
+        final bookBody = state.extra as String? ?? 'Empty Content';
+
+        return BookDetailsPage(
+          bookTitle: bookTitle,
+          bookAuthor: bookAuthor,
+          bookCover: bookCover,
+          bookBody: bookBody,
+          bookSummary: bookSummary,
+        );
+      },
     ),
     GoRoute(
       path: '/menuscreens',
