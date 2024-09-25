@@ -1,8 +1,6 @@
 import 'dart:ui';
-
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
-
 import '../../constants/app_write_constants.dart';
 import 'epub_reader_page.dart';
 
@@ -36,13 +34,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
     // Check if the summary exceeds 80 words
     final hasMoreThan80Words = words.length > 80;
-    Screen.initialize(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
-        iconTheme: IconThemeData(
-          color: AppColors.textPrimary
-        ),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
         title: Text(
           widget.bookTitle,
           style: TextStyle(
@@ -53,15 +49,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(
-                Icons.arrow_downward
-            ),
+            child: Icon(Icons.arrow_downward),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(
-              Icons.share
-            ),
+            child: Icon(Icons.share),
           ),
         ],
       ),
@@ -69,7 +61,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         color: AppColors.backgroundSecondary,
         width: MediaQuery.of(context).size.width,
         child: Column(
-        //  crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (widget.bookCover.isNotEmpty)
               Stack(
@@ -77,32 +68,51 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 children: [
                   // Background image with blur and black overlay
                   Container(
-                    width: Screen.width,
-                    height: Screen.height * 0.4,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height * 0.4,
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         fit: BoxFit.fill,
-                        image: NetworkImage('${widget.bookCover}'),
+                        image: NetworkImage(widget.bookCover),
                       ),
                     ),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Increase blur effect if needed
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                       child: Container(
-                        color: Colors.black.withOpacity(0.6), // Black color with transparency
+                        color: Colors.black.withOpacity(0.6),
                       ),
                     ),
                   ),
                   // Foreground book cover image without blur
                   Image.network(
                     widget.bookCover,
-                    height: Screen.height * 0.32,
-                    fit: BoxFit.fill, // Ensure proper fit
+                    height: MediaQuery.of(context).size.height * 0.32,
+                    fit: BoxFit.fill,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: MediaQuery.of(context).size.height * 0.32,
+                        width: MediaQuery.of(context).size.width,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey), // Optional border
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${widget.bookTitle} Book Cover \n No Internet',
+                          style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
-            Divider(color: AppColors.dividerColor,),
+            Divider(color: AppColors.dividerColor),
             Text(
-              'by: ${widget.bookAuthor} | ${widget.bookAuthor} | ${widget.bookAuthor}',
+              'by: ${widget.bookAuthor}',
               style: const TextStyle(
                 fontSize: 15,
                 color: AppColors.textSecondary,
@@ -111,14 +121,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             Divider(color: AppColors.dividerColor),
             const SizedBox(height: 16),
             InkWell(
-              onTap: (){
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => BookReader(
-                      bookTitle: widget.bookTitle ?? 'Unknown Title',
-                      bookAuthor: widget.bookAuthor ?? 'Unknown Author',
-                      bookBody: widget.bookBody ?? 'Empty',
+                      bookTitle: widget.bookTitle,
+                      bookAuthor: widget.bookAuthor,
+                      bookBody: widget.bookBody,
                     ),
                   ),
                 );
@@ -143,7 +153,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         fontSize: 20,
                         color: AppColors.textPrimary,
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -151,7 +161,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             const SizedBox(height: 16),
             Container(
               alignment: Alignment.topLeft,
-              padding: EdgeInsets.only(left: 20),
+              padding: const EdgeInsets.only(left: 20),
               child: Text(
                 'Annotation',
                 style: TextStyle(
