@@ -61,7 +61,7 @@ class _EBooksPageState extends State<EBooksPage> {
 
   Future<void> fetchBooks() async {
     try {
-      int limit = 100; // Adjust the limit as needed
+      int limit = 1000000; // Adjust the limit as needed
       int offset = 0;
       List<Document> allDocuments = [];
 
