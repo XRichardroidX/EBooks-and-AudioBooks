@@ -1,3 +1,4 @@
+import 'package:appwrite/models.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
@@ -52,7 +53,7 @@ class _EBooksPageState extends State<EBooksPage> {
     final currentTime = DateTime.now().millisecondsSinceEpoch;
 
     // Fetch books if 24 hours have passed since last fetch
-    if (currentTime - lastFetchTime > Duration.hoursPerDay) {
+    if (currentTime - lastFetchTime > Duration.secondsPerMinute) {
       await fetchBooks();
       await prefs.setInt('lastFetchTime', currentTime);
     }
@@ -60,10 +61,28 @@ class _EBooksPageState extends State<EBooksPage> {
 
   Future<void> fetchBooks() async {
     try {
-      final response = await databases.listDocuments(
-        databaseId: Constants.databaseId,
-        collectionId: Constants.ebooksCollectionId,
-      );
+      int limit = 100; // Adjust the limit as needed
+      int offset = 0;
+      List<Document> allDocuments = [];
+
+      while (true) {
+        final response = await databases.listDocuments(
+          databaseId: Constants.databaseId,
+          collectionId: Constants.ebooksCollectionId,
+          queries: [
+            Query.limit(limit),
+            Query.offset(offset),
+          ],
+        );
+
+        allDocuments.addAll(response.documents);
+
+        if (response.documents.length < limit) {
+          break; // Exit loop if the last batch is smaller than the limit
+        }
+
+        offset += limit;
+      }
 
       if (!mounted) return;
 
@@ -72,7 +91,7 @@ class _EBooksPageState extends State<EBooksPage> {
           value.clear(); // Clear old data
         });
 
-        for (var doc in response.documents) {
+        for (var doc in allDocuments) {
           var bookCategory = doc.data['bookCategory'] ?? 'Unknown';
           var bookData = {
             'authorNames': doc.data['authorNames'],
@@ -98,6 +117,7 @@ class _EBooksPageState extends State<EBooksPage> {
       });
     }
   }
+
 
   Future<void> saveBooksToPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
