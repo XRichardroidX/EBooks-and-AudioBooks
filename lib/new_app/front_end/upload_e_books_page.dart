@@ -236,70 +236,70 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                   },
                 ),
                 const SizedBox(height: 16.0),
-                // Book Summary
-                TextFormField(
-                  controller: _bookTableOfContentController,
-                  style: TextStyle(color: AppColors.textPrimary), // Text color
-                  decoration: InputDecoration(
-                    labelText: 'Book Table ofcontent',
-                    labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
-                    ),
-                  ),
-                  maxLines: 6,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a book summary';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16.0),
-                // Book Summary
-                TextFormField(
-                  controller: _bookBodyController,
-                  style: TextStyle(color: AppColors.textPrimary), // Text color
-                  decoration: InputDecoration(
-                    labelText: 'Book Body',
-                    labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
-                    ),
-                  ),
-                  maxLines: 10,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a book summary';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16.0),
+                // // Book Summary
+                // TextFormField(
+                //   controller: _bookTableOfContentController,
+                //   style: TextStyle(color: AppColors.textPrimary), // Text color
+                //   decoration: InputDecoration(
+                //     labelText: 'Book Table ofcontent',
+                //     labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
+                //     border: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
+                //     ),
+                //     focusedBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
+                //     ),
+                //     enabledBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
+                //     ),
+                //     errorBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
+                //     ),
+                //     focusedErrorBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
+                //     ),
+                //   ),
+                //   maxLines: 6,
+                //   validator: (value) {
+                //     if (value == null || value.isEmpty) {
+                //       return 'Please enter a book summary';
+                //     }
+                //     return null;
+                //   },
+                // ),
+                // const SizedBox(height: 16.0),
+                // // Book Summary
+                // TextFormField(
+                //   controller: _bookBodyController,
+                //   style: TextStyle(color: AppColors.textPrimary), // Text color
+                //   decoration: InputDecoration(
+                //     labelText: 'Book Body',
+                //     labelStyle: TextStyle(color: AppColors.textPrimary), // Label text color
+                //     border: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.textPrimary), // Default border color
+                //     ),
+                //     focusedBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.buttonPrimary), // Border color when focused
+                //     ),
+                //     enabledBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.textPrimary), // Border color when enabled
+                //     ),
+                //     errorBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.error), // Border color when there is an error
+                //     ),
+                //     focusedErrorBorder: OutlineInputBorder(
+                //       borderSide: BorderSide(color: AppColors.error), // Border color when focused and there is an error
+                //     ),
+                //   ),
+                //   maxLines: 10,
+                //   validator: (value) {
+                //     if (value == null || value.isEmpty) {
+                //       return 'Please enter a book summary';
+                //     }
+                //     return null;
+                //   },
+                // ),
+                // const SizedBox(height: 16.0),
 
                 // Inside your _UploadEBooksPageState class, where the _selectedType is being set
                 DropdownButtonFormField<String>(

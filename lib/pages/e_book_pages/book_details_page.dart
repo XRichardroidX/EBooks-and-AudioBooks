@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 import '../../constants/app_write_constants.dart';
+import '../../widget/cached_images.dart'; // Assuming this contains your custom cache manager
 import 'epub_reader_page.dart';
 
 class BookDetailsPage extends StatefulWidget {
@@ -60,157 +62,162 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       body: Container(
         color: AppColors.backgroundSecondary,
         width: MediaQuery.of(context).size.width,
-        child: Column(
-          children: [
-            if (widget.bookCover.isNotEmpty)
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Background image with blur and black overlay
-                  Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height * 0.4,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        fit: BoxFit.fill,
-                        image: NetworkImage(widget.bookCover),
-                      ),
-                    ),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: Container(
-                        color: Colors.black.withOpacity(0.6),
-                      ),
-                    ),
-                  ),
-                  // Foreground book cover image without blur
-                  Image.network(
-                    widget.bookCover,
-                    height: MediaQuery.of(context).size.height * 0.32,
-                    fit: BoxFit.fill,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: MediaQuery.of(context).size.height * 0.32,
-                        width: MediaQuery.of(context).size.width,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey), // Optional border
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${widget.bookTitle} Book Cover \n No Internet',
-                          style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 16
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            Divider(color: AppColors.dividerColor),
-            Text(
-              'by: ${widget.bookAuthor}',
-              style: const TextStyle(
-                fontSize: 15,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            Divider(color: AppColors.dividerColor),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BookReader(
-                      bookTitle: widget.bookTitle,
-                      bookAuthor: widget.bookAuthor,
-                      bookBody: widget.bookBody,
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.3,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.0),
-                  color: AppColors.buttonPrimary,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        height: double.infinity,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              if (widget.bookCover.isNotEmpty)
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Icon(
-                      Icons.menu_book,
-                      color: AppColors.textPrimary,
-                    ),
-                    Text(
-                      'Start',
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: AppColors.textPrimary,
+                    // Background image with blur and black overlay
+                    Container(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          fit: BoxFit.fill,
+                          image: CachedNetworkImageProvider(
+                            widget.bookCover,
+                            cacheManager: CustomCacheManager(), // Use your custom cache manager
+                          ),
+                        ),
                       ),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Container(
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                    // Foreground book cover image without blur
+                    CachedNetworkImage(
+                      imageUrl: widget.bookCover,
+                      cacheManager: CustomCacheManager(),
+                      height: MediaQuery.of(context).size.height * 0.32,
+                      fit: BoxFit.fill,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) {
+                        return Container(
+                          height: MediaQuery.of(context).size.height * 0.32,
+                          width: MediaQuery.of(context).size.width,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey), // Optional border
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${widget.bookTitle} Book Cover \n No Internet',
+                            style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 16),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              alignment: Alignment.topLeft,
-              padding: const EdgeInsets.only(left: 20),
-              child: Text(
-                'Annotation',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              Divider(color: AppColors.dividerColor),
+              Text(
+                'by: ${widget.bookAuthor}',
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textSecondary,
                 ),
               ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
+              Divider(color: AppColors.dividerColor),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookReader(
+                        bookTitle: widget.bookTitle,
+                        bookAuthor: widget.bookAuthor,
+                        bookBody: widget.bookBody,
+                      ),
+                    ),
+                  );
+                },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  child: Column(
+                  width: MediaQuery.of(context).size.width * 0.3,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12.0),
+                    color: AppColors.buttonPrimary,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
+                      Icon(
+                        Icons.menu_book,
+                        color: AppColors.textPrimary,
+                      ),
                       Text(
-                        isExpanded || !hasMoreThan80Words
-                            ? widget.bookSummary
-                            : words.take(80).join(' ') + '...',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.textSecondary,
+                        'Start',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      if (hasMoreThan80Words) ...[
-                        const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              isExpanded = !isExpanded;
-                            });
-                          },
-                          child: Text(
-                            isExpanded ? 'See Less' : 'See More',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Container(
+                alignment: Alignment.topLeft,
+                padding: const EdgeInsets.only(left: 20),
+                child: Text(
+                  'Summary',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                child: Column(
+                  children: [
+                    Text(
+                      isExpanded || !hasMoreThan80Words
+                          ? widget.bookSummary
+                          : words.take(80).join(' ') + '...',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    if (hasMoreThan80Words) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isExpanded = !isExpanded;
+                          });
+                        },
+                        child: Text(
+                          isExpanded ? 'See Less' : 'See More',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

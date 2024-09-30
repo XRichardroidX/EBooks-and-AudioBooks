@@ -1,4 +1,5 @@
 import 'package:appwrite/models.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/app_write_constants.dart';
 import '../../new_app/front_end/upload_e_books_page.dart';
+import '../../widget/cached_images.dart';
 import 'epub_reader_page.dart';
 import 'dart:convert';
 
@@ -21,12 +23,19 @@ class _EBooksPageState extends State<EBooksPage> {
   late Databases databases;
 
   Map<String, List<Map<String, dynamic>>> categorizedBooks = {
-    'Romance': [],
-    'Adventure': [],
     'Mystery': [],
     'Thriller': [],
     'Science Fiction': [],
     'Fantasy': [],
+    'Romance': [],
+    'Historical Fiction': [],
+    'Horror': [],
+    'Young Adult (YA)': [],
+    'Masculinity': [],
+    'Femininity': [],
+    'Dystopian/Post-Apocalyptic': [],
+    'Crime': [],
+    'Adventure': [],  // Newly added category
   };
 
   List<Map<String, dynamic>> filteredBooks = [];
@@ -53,7 +62,7 @@ class _EBooksPageState extends State<EBooksPage> {
     final currentTime = DateTime.now().millisecondsSinceEpoch;
 
     // Fetch books if 24 hours have passed since last fetch
-    if (currentTime - lastFetchTime > Duration.secondsPerMinute) {
+    if (currentTime - lastFetchTime > Duration(days: 1).inMilliseconds) {
       await fetchBooks();
       await prefs.setInt('lastFetchTime', currentTime);
     }
@@ -61,7 +70,7 @@ class _EBooksPageState extends State<EBooksPage> {
 
   Future<void> fetchBooks() async {
     try {
-      int limit = 1000000; // Adjust the limit as needed
+      int limit = 1000; // Set to a reasonable number
       int offset = 0;
       List<Document> allDocuments = [];
 
@@ -117,7 +126,6 @@ class _EBooksPageState extends State<EBooksPage> {
       });
     }
   }
-
 
   Future<void> saveBooksToPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -276,56 +284,56 @@ class _EBooksPageState extends State<EBooksPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Container(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  if (book['bookCoverUrl'] != null)
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        book['bookCoverUrl'],
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                if (book['bookCoverUrl'] != null)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: CachedNetworkImage(
+                                      imageUrl: book['bookCoverUrl'],
+                                      cacheManager: CustomCacheManager(), // Use custom cache manager
+                                      height: 180,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                      errorWidget: (context, url, error) => Container(
                                         height: 180,
                                         width: double.infinity,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            height: 180,
-                                            width: double.infinity,
-                                            alignment: Alignment.center,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(color: Colors.grey),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              '${truncateText(book['bookTitle'])} \n Book Cover \n No Internet',
-                                              style: TextStyle(color: Colors.black54, fontSize: 16),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          );
-                                        },
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: Colors.grey),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '${truncateText(book['bookTitle'])} \n Book Cover \n No Internet',
+                                          style: const TextStyle(color: Colors.black54, fontSize: 16),
+                                          textAlign: TextAlign.center,
+                                        ),
                                       ),
                                     ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    truncateText(book['bookTitle'] ?? 'Unknown Title'),
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
                                   ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    'By: ${truncateText((book['authorNames'] as List<dynamic>).join(', ') ?? 'Unknown Author')}',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.black54,
-                                    ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  truncateText(book['bookTitle'] ?? 'Unknown Title'),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
                                   ),
-                                  const SizedBox(height: 5),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  'By: ${truncateText((book['authorNames'] as List<dynamic>).join(', ') ?? 'Unknown Author')}',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                              ],
                             ),
                           ),
                         );

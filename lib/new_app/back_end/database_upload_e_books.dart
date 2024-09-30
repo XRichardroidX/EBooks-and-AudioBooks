@@ -65,7 +65,6 @@ Future<void> uploadBookToDatabase({
         'bookBody': body, // Replace with your schema field name
         'bookCategory': bookCategory,
         'timeStamp': '${DateTime.now().millisecondsSinceEpoch}', // Replace with your schema field name
-        'numberOfPages': numberOfPages, // Replace with your schema field name
         'totalFileSize': totalFileSize,
         'bookType': bookType,
         'bookTableOfContent': tableOfContents
