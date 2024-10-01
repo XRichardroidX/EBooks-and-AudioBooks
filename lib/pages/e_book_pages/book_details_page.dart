@@ -1,9 +1,12 @@
+// lib/pages/book_details_page.dart
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ebooks_and_audiobooks/style/colors.dart';
 import 'package:flutter/material.dart';
-import '../../constants/app_write_constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../widget/book.dart';
 import '../../widget/cached_images.dart'; // Assuming this contains your custom cache manager
+import '../book_list_page.dart';
 import 'epub_reader_page.dart';
 
 class BookDetailsPage extends StatefulWidget {
@@ -28,6 +31,184 @@ class BookDetailsPage extends StatefulWidget {
 
 class _BookDetailsPageState extends State<BookDetailsPage> {
   bool isExpanded = false;
+  bool isBookInList = false; // To track if the book is already in the list
+
+
+
+
+
+
+
+  List<Book> recentBooks = [];
+
+  // Load both recentBooks and savedBooks from SharedPreferences
+  Future<void> loadBooks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> recentBooksJson = prefs.getStringList('recentBooks') ?? [];
+
+    List<Book> loadedRecentBooks =
+    recentBooksJson.map((bookJson) => Book.fromJson(bookJson)).toList();
+
+    setState(() {
+      recentBooks = loadedRecentBooks;
+    });
+  }
+
+
+
+  // Navigate to BookDetailsPage
+  void navigateToBookDetails(Book book) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookDetailsPage(
+          bookTitle: book.bookTitle,
+          bookAuthor: book.bookAuthor,
+          bookCover: book.bookCover,
+          bookBody: book.bookBody,
+          bookSummary: book.bookSummary,
+        ),
+      ),
+    ).then((_) {
+      // Reload books when returning to refresh the list
+      loadBooks();
+    });
+  }
+
+
+  // Helper function to truncate text
+  String truncateText(String text) {
+    if (text.length <= 20) {
+      return text;
+    } else {
+      return text.substring(0, 17) + '...'; // Add ellipses
+    }
+  }
+
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    loadBooks();
+    checkIfBookInList();
+  }
+
+  // Check if the current book is already in the booklist
+  Future<void> checkIfBookInList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> bookList = prefs.getStringList('bookList') ?? [];
+
+    // Decode each book and check for a match
+    bool exists = bookList.any((bookJson) {
+      Book book = Book.fromJson(bookJson);
+      return book.bookTitle == widget.bookTitle &&
+          book.bookAuthor == widget.bookAuthor;
+    });
+
+    setState(() {
+      isBookInList = exists;
+    });
+  }
+
+  // Add the current book to the booklist
+  Future<void> addToBookList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> bookList = prefs.getStringList('bookList') ?? [];
+
+    // Create a Book instance
+    Book newBook = Book(
+      bookTitle: widget.bookTitle,
+      bookAuthor: widget.bookAuthor,
+      bookCover: widget.bookCover,
+      bookBody: widget.bookBody,
+      bookSummary: widget.bookSummary,
+    );
+
+    // Check for duplicates
+    bool exists = bookList.any((bookJson) {
+      Book book = Book.fromJson(bookJson);
+      return book.bookTitle == newBook.bookTitle &&
+          book.bookAuthor == newBook.bookAuthor;
+    });
+
+    if (!exists) {
+      bookList.add(newBook.toJson());
+      await prefs.setStringList('bookList', bookList);
+      setState(() {
+        isBookInList = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Book added to your list')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Book is already in your list')),
+      );
+    }
+  }
+
+  // Optional: Remove the book from the list
+  Future<void> removeFromBookList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> bookList = prefs.getStringList('bookList') ?? [];
+
+    bookList.removeWhere((bookJson) {
+      Book book = Book.fromJson(bookJson);
+      return book.bookTitle == widget.bookTitle &&
+          book.bookAuthor == widget.bookAuthor;
+    });
+
+    await prefs.setStringList('bookList', bookList);
+    setState(() {
+      isBookInList = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Book removed from your list')),
+    );
+  }
+
+  // Save the book to recent reads
+  Future<void> addToRecentReads() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> recentBooks = prefs.getStringList('recentBooks') ?? [];
+
+    // Create a Book instance
+    Book currentBook = Book(
+      bookTitle: widget.bookTitle,
+      bookAuthor: widget.bookAuthor,
+      bookCover: widget.bookCover,
+      bookBody: widget.bookBody,
+      bookSummary: widget.bookSummary,
+    );
+
+    // Remove the book if it already exists to avoid duplicates
+    recentBooks.removeWhere((bookJson) {
+      Book book = Book.fromJson(bookJson);
+      return book.bookTitle == currentBook.bookTitle &&
+          book.bookAuthor == currentBook.bookAuthor;
+    });
+
+    // Insert the book at the beginning of the list
+    recentBooks.insert(0, currentBook.toJson());
+
+    // Optionally, limit the recent books to, say, 20
+    if (recentBooks.length > 20) {
+      recentBooks = recentBooks.sublist(0, 20);
+    }
+
+    await prefs.setStringList('recentBooks', recentBooks);
+  }
+
+
+
+
+
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -49,10 +230,42 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(Icons.arrow_downward),
+          // Booklist Icon
+          InkWell(
+            onTap: () {
+              if (isBookInList) {
+                // If already in the list, remove it
+                removeFromBookList();
+              } else {
+                // Else, add it
+                addToBookList();
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                isBookInList ? Icons.check : Icons.arrow_downward,
+                color: isBookInList ? Colors.green : Colors.white,
+              ),
+            ),
           ),
+          // Navigate to BookListPage
+          InkWell(
+            onTap: () {
+              // Navigate to the BookListPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BookListPage(),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(Icons.list),
+            ),
+          ),
+          // Share Icon (Existing)
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Icon(Icons.share),
@@ -111,8 +324,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           child: Text(
                             '${widget.bookTitle} Book Cover \n No Internet',
                             style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 16),
+                                color: AppColors.textPrimary, fontSize: 16),
                             textAlign: TextAlign.center,
                           ),
                         );
@@ -131,7 +343,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               Divider(color: AppColors.dividerColor),
               const SizedBox(height: 16),
               InkWell(
-                onTap: () {
+                onTap: () async {
+                  // Add to recent reads before navigating
+                  await addToRecentReads();
+
+                  // Navigate to the BookReader and wait for it to complete
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -216,6 +432,77 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   ],
                 ),
               ),
+              // Recent Books Section
+              if (recentBooks.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Recently Read',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              if (recentBooks.isNotEmpty)
+                SizedBox(
+                  height: 180, // Adjust the height of the horizontal list
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal, // Horizontal scrolling
+                    itemCount: recentBooks.length > 10
+                        ? 10
+                        : recentBooks.length, // Limit to a maximum of 10 books
+                    itemBuilder: (context, index) {
+                      final book = recentBooks[index];
+                      return GestureDetector(
+                        onTap: () => navigateToBookDetails(book),
+                        child: Container(
+                          width: 120,
+                          margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CachedNetworkImage(
+                                imageUrl: book.bookCover,
+                                cacheManager: CustomCacheManager(),
+                                width: 100,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) =>
+                                const CircularProgressIndicator(),
+                                errorWidget: (context, url, error) => Container(
+                                  width: 100,
+                                  height: 120,
+                                  color: Colors.grey,
+                                  child: const Icon(Icons.error),
+                                ),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Text(
+                                truncateText(book.bookTitle),
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                truncateText(book.bookAuthor),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
             ],
           ),
         ),
