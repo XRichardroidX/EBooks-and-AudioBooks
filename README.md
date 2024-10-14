@@ -1,6 +1,6 @@
-# ebooks_and_audiobooks
+# novel_world
 
-A new EBooks and Audiobooks project.
+A new Flutter project.
 
 ## Getting Started
 

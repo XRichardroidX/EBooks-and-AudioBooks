@@ -1,12 +1,13 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:ebooks_and_audiobooks/pages/audio_books_page.dart';
-import 'package:ebooks_and_audiobooks/pages/book_list_page.dart';
-import 'package:ebooks_and_audiobooks/pages/login_page.dart';
-import 'package:ebooks_and_audiobooks/pages/payment_plan_page.dart';
-import 'package:ebooks_and_audiobooks/style/colors.dart';
+import 'package:novel_world/pages/book_search.dart';
+import 'package:novel_world/pages/book_list_page.dart';
+import 'package:novel_world/pages/login_page.dart';
+import 'package:novel_world/pages/subscription/payment_plan_page.dart';
+import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
 
 import 'e_book_pages/e_books_page.dart';
+import 'logout.dart';
 
 class MenuScreens extends StatefulWidget {
   int? currentPage;
@@ -31,17 +32,19 @@ class _MenuScreensState extends State<MenuScreens> {
   // This List is for Icons that are active
   final List<IconData> _activeIcons = [
     Icons.menu_book_sharp,
-    Icons.spatial_audio_off,
-    Icons.cloud_download,
-    Icons.payment,
+    Icons.search,
+    Icons.bookmark,
+    Icons.settings,
+    Icons.settings,
   ];
 
   // This List is for Icons that are inactive
   final List<IconData> _inactiveIcons = [
     Icons.menu_book_sharp,
-    Icons.spatial_audio_off,
-    Icons.cloud_download,
-    Icons.payment,
+    Icons.search,
+    Icons.bookmark,
+    Icons.settings,
+    Icons.settings,
   ];
 
 
@@ -52,11 +55,13 @@ class _MenuScreensState extends State<MenuScreens> {
       case 0:
         return const EBooksPage();
       case 1:
-        return const AudioBooksPage();
+        return const FilterBooksPage();
       case 2:
         return const BookListPage();
       case 3:
-        return const PaymentPlanPage();
+        return SubscriptionPage();
+      case 4:
+        return LogoutPage();
       default:
         return const EBooksPage();
     }

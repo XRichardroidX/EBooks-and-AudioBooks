@@ -1,10 +1,10 @@
-import 'package:ebooks_and_audiobooks/pages/audio_books_page.dart';
-import 'package:ebooks_and_audiobooks/pages/category_page.dart';
-import 'package:ebooks_and_audiobooks/pages/book_list_page.dart';
-import 'package:ebooks_and_audiobooks/pages/e_book_pages/book_details_page.dart';
-import 'package:ebooks_and_audiobooks/pages/e_book_pages/e_books_page.dart';
-import 'package:ebooks_and_audiobooks/pages/menu_screens.dart';
-import 'package:ebooks_and_audiobooks/pages/payment_plan_page.dart';
+import 'package:novel_world/pages/book_search.dart';
+import 'package:novel_world/pages/logout.dart';
+import 'package:novel_world/pages/book_list_page.dart';
+import 'package:novel_world/pages/e_book_pages/book_details_page.dart';
+import 'package:novel_world/pages/e_book_pages/e_books_page.dart';
+import 'package:novel_world/pages/menu_screens.dart';
+import 'package:novel_world/pages/subscription/payment_plan_page.dart';
 import 'package:go_router/go_router.dart';
 import 'main.dart';
 import 'pages/login_page.dart';
@@ -28,7 +28,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/category',
-      builder: (context, state) => const CategoryPage(),
+      builder: (context, state) => const LogoutPage(),
     ),
     GoRoute(
       path: '/ebookdetails/:bookTitle/:bookAuthor/:bookCover/:bookSummary',
@@ -57,8 +57,8 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const EBooksPage(),
     ),
     GoRoute(
-      path: '/audiobooks',
-      builder: (context, state) => const AudioBooksPage(),
+      path: '/filterbooks',
+      builder: (context, state) => const FilterBooksPage(),
     ),
     GoRoute(
       path: '/downloads',
@@ -66,7 +66,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/paymentplan',
-      builder: (context, state) => const PaymentPlanPage(),
+      builder: (context, state) => LogoutPage(),
     ),
   ],
   redirect: (context, state) {

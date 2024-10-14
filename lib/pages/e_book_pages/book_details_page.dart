@@ -1,12 +1,14 @@
 // lib/pages/book_details_page.dart
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ebooks_and_audiobooks/style/colors.dart';
+import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:novel_world/widget/snack_bar_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widget/book.dart';
 import '../../widget/cached_images.dart'; // Assuming this contains your custom cache manager
 import '../book_list_page.dart';
+import '../subscription/payment_plan_page.dart';
 import 'epub_reader_page.dart';
 
 class BookDetailsPage extends StatefulWidget {
@@ -343,23 +345,73 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               Divider(color: AppColors.dividerColor),
               const SizedBox(height: 16),
               InkWell(
-                onTap: () async {
-                  // Add to recent reads before navigating
-                  await addToRecentReads();
+                // onTap: () async {
+                //   // Add to recent reads before navigating
+                //   await addToRecentReads();
+                //
+                //   // Navigate to the BookReader and wait for it to complete
+                //   Navigator.push(
+                //     context,
+                //     MaterialPageRoute(
+                //       builder: (context) => BookReader(
+                //         bookTitle: widget.bookTitle,
+                //         bookAuthor: widget.bookAuthor,
+                //         bookBody: widget.bookBody,
+                //       ),
+                //     ),
+                //   );
+                // },
+                  onTap: () async {
+                    // Retrieve the subscription end timestamp from SharedPreferences
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                    String? endSubString = prefs.getString('endSub');
 
-                  // Navigate to the BookReader and wait for it to complete
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookReader(
-                        bookTitle: widget.bookTitle,
-                        bookAuthor: widget.bookAuthor,
-                        bookBody: widget.bookBody,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
+                    try {
+                      if (endSubString != null) {
+                        // Convert the endSub string back to a DateTime object
+                        DateTime endSubDate = DateTime.parse(endSubString);
+                        DateTime currentTime = DateTime.now();
+
+                        // Check if the current time exceeds the subscription end time
+                        if (currentTime.isAfter(endSubDate)) {
+                          // Subscription has expired, navigate to the subscription page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SubscriptionPage(), // Navigate to your subscription page
+                            ),
+                          );
+                        } else {
+                          // Subscription is active, open the book reader
+                          await addToRecentReads();
+
+                          // Navigate to the BookReader and wait for it to complete
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookReader(
+                                bookTitle: widget.bookTitle,
+                                bookAuthor: widget.bookAuthor,
+                                bookBody: widget.bookBody,
+                              ),
+                            ),
+                          );
+                        }
+                      } else {
+                        // Handle case where endSub is not found in SharedPreferences (e.g., prompt subscription)
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SubscriptionPage(), // Navigate to your subscription page
+                          ),
+                        );
+                      }
+                    } catch (error) {
+                      showCustomSnackbar(context, '$error', '$error', Colors.black);
+                      print(error);
+                    }
+                  },
+                  child: Container(
                   width: MediaQuery.of(context).size.width * 0.3,
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(

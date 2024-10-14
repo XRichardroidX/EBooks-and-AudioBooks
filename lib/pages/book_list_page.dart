@@ -1,7 +1,7 @@
 // lib/pages/book_list_page.dart
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ebooks_and_audiobooks/style/colors.dart';
+import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widget/book.dart';
@@ -199,6 +199,7 @@ class _BookListPageState extends State<BookListPage> {
               ),
             if (savedBooks.isNotEmpty)
               ListView.builder(
+                reverse: true,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: savedBooks.length,

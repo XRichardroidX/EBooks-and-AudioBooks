@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:ebooks_and_audiobooks/style/colors.dart';
-import 'package:ebooks_and_audiobooks/widget/snack_bar_message.dart';
+import 'package:novel_world/style/colors.dart';
+import 'package:novel_world/widget/snack_bar_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';

@@ -1,45 +1,60 @@
-import 'package:ebooks_and_audiobooks/style/colors.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:ui';
+
+import 'package:appwrite/appwrite.dart';
+import 'package:appwrite/enums.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/material.dart';
+import 'package:universal_io/io.dart';
+import '../constants/app_write_constants.dart';
+import '../style/colors.dart';
 import '../widget/snack_bar_message.dart';
 
-Future<UserCredential?> signInWithGoogle(BuildContext context) async {
+Future<bool> signInWithGoogle(BuildContext context) async {
   try {
-    // Step 1: Initialize the GoogleSignIn object
-    final GoogleSignIn googleSignIn = GoogleSignIn();
+    // Initialize Appwrite client
+    Client client = Client();
+    Account account = Account(client);
 
-    // Step 2: Start the Google Sign-In process
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    client
+        .setEndpoint(Constants.endpoint) // Set your Appwrite endpoint
+        .setProject(Constants.projectId); // Set your Appwrite project ID
 
-    // If the user cancels the sign-in, googleUser will be null
-    if (googleUser == null) {
-      showCustomSnackbar(context, 'Authentication', 'Google sign-in aborted by user', AppColors.warning);
-      print('Google sign-in aborted by user.');
-      return null;
-    }
-
-    // Step 3: Obtain the Google Sign-In authentication details
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-    // Step 4: Create a new credential for Firebase Authentication
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+    // Start the OAuth2 Google login
+    await account.createOAuth2Session(
+      provider: OAuthProvider.google,
+    //  success: 'localhost',  // Make sure this matches your custom scheme
+    //  failure: 'localhost',
+      scopes: ['email', 'profile'], // Requesting 'email' and 'profile' scopes
     );
 
-    // Step 5: Use the credential to sign in to Firebase
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-
-    // Step 6: Display success message
-    showCustomSnackbar(context, 'Authentication', 'Google sign-in successful. User: ${userCredential.user?.displayName}', AppColors.success);
-    print('Google sign-in successful. User: ${userCredential.user?.displayName}');
-    return userCredential;
-
+    // Display success message
+    showCustomSnackbar(context, 'Authentication', 'Google sign-in successful', AppColors.success);
+    print('Google sign-in successful.');
+    return true;
   } catch (e) {
     // Display error message in case of failure
     showCustomSnackbar(context, 'Authentication', 'Failed to sign in with Google: $e', AppColors.error);
     print('Failed to sign in with Google: $e');
-    return null;
+    return false;
+  }
+}
+
+void handleIncomingLinks(BuildContext context) {
+  // This method checks for incoming links
+  if (Platform.isAndroid) {
+    // Android-specific deep link handling
+    final uri = Uri.tryParse(window.defaultRouteName);
+
+    if (uri != null) {
+      if (uri.host == 'login-success') {
+        // Handle successful login
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else if (uri.host == 'login-failure') {
+        // Handle failed login
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed. Please try again.')),
+        );
+      }
+    }
   }
 }

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>964817410391-1c0ddnd5dg6rhudrnio0vp5jvr3m7fju.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.964817410391-1c0ddnd5dg6rhudrnio0vp5jvr3m7fju</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>964817410391-8jlu0ms0hp4k4d6orgrtj2u9de9dktm7.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyA_5o6M-brrJtcsUxuuB92Dafjc3OEJZUs</string>
+	<key>GCM_SENDER_ID</key>
+	<string>964817410391</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.novelworld.novelWorld</string>
+	<key>PROJECT_ID</key>
+	<string>ebooks-and-audiobooks-60245</string>
+	<key>STORAGE_BUCKET</key>
+	<string>ebooks-and-audiobooks-60245.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:964817410391:ios:7d7e7bdfbece9d8bdb8612</string>
+</dict>
+</plist>

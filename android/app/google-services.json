@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "964817410391",
+    "project_id": "ebooks-and-audiobooks-60245",
+    "storage_bucket": "ebooks-and-audiobooks-60245.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964817410391:android:f888cdc87a868dbddb8612",
+        "android_client_info": {
+          "package_name": "com.ebooks_and_audiobooks.ebooks_and_audiobooks"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "964817410391-8jlu0ms0hp4k4d6orgrtj2u9de9dktm7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ebooks_and_audiobooks.ebooks_and_audiobooks",
+            "certificate_hash": "266a2c73b6b946bdb15f683edccfe3c2bb762338"
+          }
+        },
+        {
+          "client_id": "964817410391-aet307009gj29911go2tdljbfnd1q1n6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqiOJc3hJb9iu4ddlRffF2yLkaOH6wGoE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "964817410391-aet307009gj29911go2tdljbfnd1q1n6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "964817410391-k12ige9k50m1nk4e0v5adnnn07lipqqr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ebooksandaudiobooks.ebooksAndAudiobooks"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964817410391:android:abe755a9b4da1a79db8612",
+        "android_client_info": {
+          "package_name": "com.novelworld.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "964817410391-aet307009gj29911go2tdljbfnd1q1n6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqiOJc3hJb9iu4ddlRffF2yLkaOH6wGoE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "964817410391-aet307009gj29911go2tdljbfnd1q1n6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "964817410391-k12ige9k50m1nk4e0v5adnnn07lipqqr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ebooksandaudiobooks.ebooksAndAudiobooks"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
