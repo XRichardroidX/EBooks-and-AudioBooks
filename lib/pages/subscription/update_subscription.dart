@@ -63,7 +63,7 @@ Future<void> updateSubscription(String userId, String feedback) async {
     print('Current date (ISO8601): $currentDateString');
 
     // Calculate the end date (current date + 30 days) in ISO8601 string format
-    String endDateString = DateTime.now().add(const Duration(seconds: 10)).toIso8601String();
+    String endDateString = DateTime.now().add(const Duration(days: 30)).toIso8601String();
     print('End date (ISO8601): $endDateString');
 
     // Update the subscription details (startSub and endSub) as strings
@@ -76,6 +76,7 @@ Future<void> updateSubscription(String userId, String feedback) async {
         'endSub': endDateString,
       },
     );
+    prefs.setString('startSub', '$currentDateString');
     prefs.setString('endSub', '$endDateString');
 
     print('Subscription updated successfully for userId: $userId');

@@ -1,6 +1,8 @@
 // lib/pages/book_list_page.dart
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,21 +70,30 @@ class _BookListPageState extends State<BookListPage> {
 
   // Navigate to BookDetailsPage
   void navigateToBookDetails(Book book) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookDetailsPage(
-          bookTitle: book.bookTitle,
-          bookAuthor: book.bookAuthor,
-          bookCover: book.bookCover,
-          bookBody: book.bookBody,
-          bookSummary: book.bookSummary,
+    // Check if the user is authenticated
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      // If not logged in, navigate to the login page
+      context.push('/login');
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              BookDetailsPage(
+                bookTitle: book.bookTitle,
+                bookAuthor: book.bookAuthor,
+                bookCover: book.bookCover,
+                bookBody: book.bookBody,
+                bookSummary: book.bookSummary,
+              ),
         ),
-      ),
-    ).then((_) {
-      // Reload books when returning to refresh the list
-      loadBooks();
-    });
+      ).then((_) {
+        // Reload books when returning to refresh the list
+        loadBooks();
+      });
+    }
   }
 
 

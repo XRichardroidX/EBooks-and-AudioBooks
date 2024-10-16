@@ -85,7 +85,7 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       List tableOfContents = epubToText['tableOfContents'];
       String body = epubToText['body'];
       _bookTitleController.text = title;
-      _authorNameController.text = authors.join();
+      _authorNameController.text = authors.join(',');
       _bookTableOfContentController.text = tableOfContents.toString();
       _bookBodyController.text = body;
     }

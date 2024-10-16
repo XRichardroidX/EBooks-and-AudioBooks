@@ -1,12 +1,15 @@
 import 'dart:async'; // For Timer
 import 'dart:convert';
 import 'package:appwrite/models.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:appwrite/appwrite.dart'; // Appwrite SDK
 import '../constants/app_write_constants.dart';
 import '../new_app/front_end/upload_e_books_page.dart';
+import '../style/colors.dart';
 import '../widget/book.dart';
 import 'e_book_pages/book_details_page.dart';
 import 'dart:math';
@@ -102,6 +105,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
           'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
           'bookBody': doc.data['bookBody'] ?? '',
           'bookSummary': doc.data['bookSummary'] ?? '',
+          'bookCategories': doc.data['bookCategories'] ?? '',
         };
       }).toList();
 
@@ -154,6 +158,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
   }
 
   List<Map<String, dynamic>> applyFilter(String query) {
+    query = query.trim();
     if (query.isEmpty) {
       return List.from(originalBooks);
     } else {
@@ -183,18 +188,27 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
   }
 
   void navigateToBookDetails(Map<String, dynamic> book) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookDetailsPage(
-          bookTitle: book['bookTitle'],
-          bookAuthor: book['authorNames'],
-          bookCover: book['bookCoverUrl'],
-          bookBody: book['bookBody'],
-          bookSummary: book['bookSummary'],
+    // Check if the user is authenticated
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      // If not logged in, navigate to the login page
+      context.push('/login');
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              BookDetailsPage(
+                bookTitle: book['bookTitle'],
+                bookAuthor: book['authorNames'],
+                bookCover: book['bookCoverUrl'],
+                bookBody: book['bookBody'],
+                bookSummary: book['bookSummary'],
+              ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   @override
@@ -332,6 +346,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                                   Text(
                                     book['bookTitle'],
                                     style: const TextStyle(
+                                      fontSize: 17,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
@@ -340,7 +355,14 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                                   Text(
                                     'Authors: ${book['authorNames']}',
                                     style: const TextStyle(
-                                        color: Colors.white),
+                                        fontSize: 15,
+                                        color: AppColors.textSecondary),
+                                  ),
+                                  Text(
+                                    '${book['bookCategories'].join(" ")}',
+                                    style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textHighlight),
                                   ),
                                 ],
                               ),

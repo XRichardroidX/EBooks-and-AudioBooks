@@ -224,20 +224,29 @@ class _EBooksPageState extends State<EBooksPage> {
   }
 
   void navigateToBookDetails(Book book) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookDetailsPage(
-          bookTitle: book.bookTitle,
-          bookAuthor: book.bookAuthor,
-          bookCover: book.bookCover,
-          bookBody: book.bookBody,
-          bookSummary: book.bookSummary,
+    // Check if the user is authenticated
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      // If not logged in, navigate to the login page
+      context.push('/login');
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              BookDetailsPage(
+                bookTitle: book.bookTitle,
+                bookAuthor: book.bookAuthor,
+                bookCover: book.bookCover,
+                bookBody: book.bookBody,
+                bookSummary: book.bookSummary,
+              ),
         ),
-      ),
-    ).then((_) {
-      loadBooks();
-    });
+      ).then((_) {
+        loadBooks();
+      });
+    }
   }
 
   @override
@@ -362,6 +371,7 @@ class _EBooksPageState extends State<EBooksPage> {
                                     Text(
                                       truncateText(book.bookTitle),
                                       style: const TextStyle(
+                                        fontSize: 17,
                                         color: AppColors.textPrimary,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -370,7 +380,9 @@ class _EBooksPageState extends State<EBooksPage> {
                                     ),
                                     Text(
                                       truncateText(book.bookAuthor),
-                                      style: const TextStyle(color: AppColors.textSecondary),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                          color: AppColors.textSecondary),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),

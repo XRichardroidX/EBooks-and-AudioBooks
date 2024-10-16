@@ -1,10 +1,12 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/app_write_constants.dart'; // Firebase for email/password authentication
+import '../constants/app_write_constants.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,7 +23,28 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false; // State to track loading
   bool _isPasswordVisible = false; // State to track password visibility
 
-  // Function to log the user in with email and password using Firebase
+
+  final Client client = Client();
+  late Databases databases;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    initializeAppwrite();
+    super.initState();
+  }
+
+  void initializeAppwrite() {
+    // Initialize the Appwrite client with endpoint and project ID from constants
+    client
+        .setEndpoint(Constants.endpoint) // e.g., 'https://cloud.appwrite.io/v1'
+        .setProject(Constants.projectId); // Your project ID
+
+    databases = Databases(client);
+    print('Appwrite Client Initialized');
+  }
+
+// Function to log the user in with email and password using Firebase
   Future<void> _loginWithEmailPassword(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -30,16 +53,44 @@ class _LoginPageState extends State<LoginPage> {
 
       try {
         // Sign in with email and password using Firebase
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
-        // Navigate to the home screen upon successful login
-        context.go('/menuscreens'); // Replace with your home screen route
+        // Get the Firebase userId after successful login
+        String firebaseUserId = userCredential.user!.uid;
 
-        // Show success message
-        showCustomSnackbar(context, 'Login', 'Login successful!', AppColors.success);
+        // Now search for the user in the Appwrite database using this Firebase userId
+        // Assuming you have a users collection in Appwrite with 'firebaseUserId' as an attribute
+        var response = await databases.listDocuments(
+          databaseId: Constants.databaseId,
+          collectionId: Constants.usersCollectionId,
+          queries: [Query.equal('userId', firebaseUserId)],
+        );
+
+        if (response.documents.isNotEmpty) {
+          // Get the first matching user document
+          var userDocument = response.documents.first;
+
+          // Extract the 'startSub' and 'endSub' attributes
+          String startSub = userDocument.data['startSub'];
+          String endSub = userDocument.data['endSub'];
+
+          // Save the 'startSub' and 'endSub' to Shared Preferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('startSub', startSub);
+          prefs.setString('endSub', endSub);
+
+         // Navigate to the home screen upon successful login
+          context.go('/menuscreens'); // Replace with your home screen route
+
+          // Show success message
+          showCustomSnackbar(context, 'Login', 'Login successful!', AppColors.success);
+        } else {
+          // Handle case where no user is found in the Appwrite database
+          showCustomSnackbar(context, 'Login Failed', 'User not found in Appwrite.', AppColors.error);
+        }
       } catch (e) {
         showCustomSnackbar(context, 'Login Failed', 'Invalid credentials or error occurred.', AppColors.error);
         print('Login error: $e');
@@ -50,6 +101,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
