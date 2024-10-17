@@ -45,10 +45,12 @@ class _EBooksPageState extends State<EBooksPage> {
   List<Map<String, dynamic>> filteredBooks = [];
   bool isInitialLoading = true;
   bool isFetching = false;
+  String userId = '';
 
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     loadBooks();
     client.setEndpoint(Constants.endpoint).setProject(Constants.projectId);
     databases = Databases(client);
@@ -60,12 +62,12 @@ class _EBooksPageState extends State<EBooksPage> {
 
   Future<void> checkForNewBooks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final lastFetchTime = prefs.getInt('lastFetchTime') ?? 0;
+    final lastFetchTime = prefs.getInt('$userId+lastFetchTime') ?? 0;
     final currentTime = DateTime.now().millisecondsSinceEpoch;
 
     if (currentTime - lastFetchTime > Duration(seconds: 1).inMilliseconds) {
       await fetchBooks();
-      await prefs.setInt('lastFetchTime', currentTime);
+      await prefs.setInt('$userId+lastFetchTime', currentTime);
     }
   }
 
@@ -83,7 +85,7 @@ class _EBooksPageState extends State<EBooksPage> {
     }
 
     try {
-      int limit = 1000;
+      int limit = 100;
       int offset = 0;
       List<Document> allDocuments = [];
 
@@ -177,12 +179,12 @@ class _EBooksPageState extends State<EBooksPage> {
   Future<void> saveBooksToPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String jsonBooks = json.encode(categorizedBooks);
-    await prefs.setString('categorizedBooks', jsonBooks);
+    await prefs.setString('$userId+categorizedBooks', jsonBooks);
   }
 
   Future<void> loadBooksFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonBooks = prefs.getString('categorizedBooks');
+    String? jsonBooks = prefs.getString('$userId+categorizedBooks');
 
     if (jsonBooks != null) {
       final decoded = json.decode(jsonBooks) as Map<String, dynamic>;
@@ -213,7 +215,7 @@ class _EBooksPageState extends State<EBooksPage> {
 
   Future<void> loadBooks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> recentBooksJson = prefs.getStringList('recentBooks') ?? [];
+    List<String> recentBooksJson = prefs.getStringList('$userId+recentBooks') ?? [];
 
     List<Book> loadedRecentBooks =
     recentBooksJson.map((bookJson) => Book.fromJson(bookJson)).toList();
@@ -301,7 +303,7 @@ class _EBooksPageState extends State<EBooksPage> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: categorizedBooks.values.any((list) => list.isNotEmpty) ? RefreshIndicator(
         onRefresh: () async {
           await fetchBooks();
         },
@@ -507,7 +509,9 @@ class _EBooksPageState extends State<EBooksPage> {
             ],
           ),
         ),
-      ),
+      )
+          :
+          Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,))
     );
   }
 }

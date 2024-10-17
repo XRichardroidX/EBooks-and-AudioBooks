@@ -48,11 +48,18 @@ class SubscriptionPage extends StatelessWidget {
       backgroundColor: Colors.black, // Netflix-style dark background
       appBar: AppBar(
         backgroundColor: Colors.black,
+        leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios)),
+        actions: [
+          IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_forward_ios)),
+        ],
+        iconTheme: IconThemeData(
+          color: AppColors.textPrimary
+        ),
         title: const Center(
           child: Text(
             'Subscribe to NovelWorld',
             style: TextStyle(
-              color: Colors.redAccent,
+              color: AppColors.textHighlight,
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -90,22 +97,22 @@ class SubscriptionPage extends StatelessWidget {
               // Subscription Plans
               _buildSubscriptionPlan(
                 context,
-                'Individual Plan',
-                'Get access for one user only',
-                '\$9.99/month',
-                'Subscribe Individually',
-                Colors.redAccent,
-                    () => _onSubscribeTap(context, 'Individual'),
+                'Monthly Plan',
+                'Unlimited books for a month',
+                '\₦900/month',
+                'Subscribe for 1 Month',
+                  AppColors.textHighlight,
+                    () => _onSubscribeTap(context, 'for 1 Month'),
               ),
               const SizedBox(height: 30),
               _buildSubscriptionPlan(
                 context,
-                'Family Plan',
-                'Up to 5 users can share the account',
-                '\$19.99/month',
-                'Subscribe Family',
-                Colors.redAccent,
-                    () => _onSubscribeTap(context, 'Family'),
+                'Yearly Plan',
+                'Unlimited books for 12 whole month',
+                '\₦9,000/year',
+                'Subscribe for 1 Year',
+                  AppColors.textHighlight,
+                    () => _onSubscribeTap(context, 'for 1 Year'),
               ),
               const SizedBox(height: 40),
 
@@ -134,7 +141,7 @@ class SubscriptionPage extends StatelessWidget {
                 child: Text(
                   'Go Back',
                   style: TextStyle(
-                    color: Colors.redAccent,
+                    color: AppColors.textHighlight,
                     fontSize: 16,
                   ),
                 ),
@@ -186,7 +193,7 @@ class SubscriptionPage extends StatelessWidget {
           Text(
             price,
             style: TextStyle(
-              color: Colors.redAccent,
+              color: AppColors.textHighlight,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -195,7 +202,7 @@ class SubscriptionPage extends StatelessWidget {
           ElevatedButton(
             onPressed: onTap,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent, // Red Netflix-style button
+              backgroundColor: AppColors.textHighlight, // Red Netflix-style button
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

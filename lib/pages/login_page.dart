@@ -23,7 +23,6 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false; // State to track loading
   bool _isPasswordVisible = false; // State to track password visibility
 
-
   final Client client = Client();
   late Databases databases;
 
@@ -79,8 +78,8 @@ class _LoginPageState extends State<LoginPage> {
 
           // Save the 'startSub' and 'endSub' to Shared Preferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setString('startSub', startSub);
-          prefs.setString('endSub', endSub);
+          prefs.setString('$firebaseUserId+startSub', startSub);
+          prefs.setString('$firebaseUserId+endSub', endSub);
 
          // Navigate to the home screen upon successful login
           context.go('/menuscreens'); // Replace with your home screen route
@@ -109,6 +108,13 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
+        iconTheme: IconThemeData(
+          color: AppColors.textPrimary
+        ),
+        leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios)),
+        actions: [
+          IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_forward_ios)),
+        ],
         title: const Center(
           child: Text(
             'Login Page',

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_write_constants.dart';
@@ -26,8 +27,9 @@ class _BookReaderState extends State<BookReader> {
   List<String> _words = [];
   int _currentPageIndex = 0;
   double _progress = 0.0;
+  String userId = '';
 
-  double _fontSize = 17; // Default font size
+  double _fontSize = 18; // Default font size
   int get _wordsPerPage => (1500 / _fontSize).round(); // Adjust words per page based on font size
 
   final ScrollController _scrollController = ScrollController();
@@ -36,6 +38,7 @@ class _BookReaderState extends State<BookReader> {
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser!.uid;
     _loadPreferences();
     _splitContentIntoWords();
     _loadCurrentPage();
@@ -54,17 +57,17 @@ class _BookReaderState extends State<BookReader> {
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-      _fontSize = prefs.getDouble('fontSize') ?? 17;
-      _currentPageIndex = prefs.getInt('${widget.bookTitle}_pageIndex') ?? 0;
+      _isDarkMode = prefs.getBool('$userId+isDarkMode') ?? false;
+      _fontSize = prefs.getDouble('$userId+fontSize') ?? 18;
+      _currentPageIndex = prefs.getInt('$userId+${widget.bookTitle}+pageIndex') ?? 0;
     });
   }
 
   Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', _isDarkMode);
-    await prefs.setDouble('fontSize', _fontSize);
-    await prefs.setInt('${widget.bookTitle}_pageIndex', _currentPageIndex);
+    await prefs.setBool('$userId+isDarkMode', _isDarkMode);
+    await prefs.setDouble('$userId+fontSize', _fontSize);
+    await prefs.setInt('$userId+${widget.bookTitle}+pageIndex', _currentPageIndex);
   }
 
   void _splitContentIntoWords() {
@@ -125,7 +128,7 @@ class _BookReaderState extends State<BookReader> {
 
   void _increaseFontSize() {
     setState(() {
-      _fontSize += 2; // Increase font size by 2
+      if (_fontSize < 20) _fontSize += 1; // Increase font size by 2
       _loadCurrentPage(); // Reload current page after changing font size
       _updateProgress(); // Update progress to reflect new state
     });
@@ -133,7 +136,7 @@ class _BookReaderState extends State<BookReader> {
 
   void _decreaseFontSize() {
     setState(() {
-      if (_fontSize > 10) _fontSize -= 2; // Decrease font size but not below 10
+      if (_fontSize > 10) _fontSize -= 1; // Decrease font size but not below 10
       _loadCurrentPage(); // Reload current page after changing font size
       _updateProgress(); // Update progress to reflect new state
     });
@@ -193,7 +196,7 @@ class _BookReaderState extends State<BookReader> {
         body: _isLoading
             ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
             : Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 50),
+          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30),
           child: Column(
             children: [
               Expanded(

@@ -76,8 +76,8 @@ Future<void> updateSubscription(String userId, String feedback) async {
         'endSub': endDateString,
       },
     );
-    prefs.setString('startSub', '$currentDateString');
-    prefs.setString('endSub', '$endDateString');
+    prefs.setString('$userId+startSub', '$currentDateString');
+    prefs.setString('$userId+endSub', '$endDateString');
 
     print('Subscription updated successfully for userId: $userId');
   } catch (e) {

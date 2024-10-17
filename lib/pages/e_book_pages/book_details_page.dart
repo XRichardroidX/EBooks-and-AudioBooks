@@ -1,6 +1,6 @@
-// lib/pages/book_details_page.dart
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
@@ -34,9 +34,7 @@ class BookDetailsPage extends StatefulWidget {
 class _BookDetailsPageState extends State<BookDetailsPage> {
   bool isExpanded = false;
   bool isBookInList = false; // To track if the book is already in the list
-
-
-
+  String userId = '';
 
 
 
@@ -46,7 +44,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   // Load both recentBooks and savedBooks from SharedPreferences
   Future<void> loadBooks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> recentBooksJson = prefs.getStringList('recentBooks') ?? [];
+    List<String> recentBooksJson = prefs.getStringList('$userId+recentBooks') ?? [];
 
     List<Book> loadedRecentBooks =
     recentBooksJson.map((bookJson) => Book.fromJson(bookJson)).toList();
@@ -93,6 +91,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser!.uid;
     loadBooks();
     checkIfBookInList();
   }
@@ -100,7 +99,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   // Check if the current book is already in the booklist
   Future<void> checkIfBookInList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> bookList = prefs.getStringList('bookList') ?? [];
+    List<String> bookList = prefs.getStringList('$userId+bookList') ?? [];
 
     // Decode each book and check for a match
     bool exists = bookList.any((bookJson) {
@@ -117,7 +116,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   // Add the current book to the booklist
   Future<void> addToBookList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> bookList = prefs.getStringList('bookList') ?? [];
+    List<String> bookList = prefs.getStringList('$userId+bookList') ?? [];
 
     // Create a Book instance
     Book newBook = Book(
@@ -137,24 +136,20 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
     if (!exists) {
       bookList.add(newBook.toJson());
-      await prefs.setStringList('bookList', bookList);
+      await prefs.setStringList('$userId+bookList', bookList);
       setState(() {
         isBookInList = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Book added to your list')),
-      );
+      showCustomSnackbar(context, 'Read List', 'Book added to your list', AppColors.success);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Book is already in your list')),
-      );
+      showCustomSnackbar(context, 'Read List', 'Book is already in your list', AppColors.info);
     }
   }
 
   // Optional: Remove the book from the list
   Future<void> removeFromBookList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> bookList = prefs.getStringList('bookList') ?? [];
+    List<String> bookList = prefs.getStringList('$userId+bookList') ?? [];
 
     bookList.removeWhere((bookJson) {
       Book book = Book.fromJson(bookJson);
@@ -162,19 +157,17 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           book.bookAuthor == widget.bookAuthor;
     });
 
-    await prefs.setStringList('bookList', bookList);
+    await prefs.setStringList('$userId+bookList', bookList);
     setState(() {
       isBookInList = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Book removed from your list')),
-    );
+    showCustomSnackbar(context, 'Read List', 'Book removed from your list', AppColors.info);
   }
 
   // Save the book to recent reads
   Future<void> addToRecentReads() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> recentBooks = prefs.getStringList('recentBooks') ?? [];
+    List<String> recentBooks = prefs.getStringList('$userId+recentBooks') ?? [];
 
     // Create a Book instance
     Book currentBook = Book(
@@ -200,17 +193,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       recentBooks = recentBooks.sublist(0, 20);
     }
 
-    await prefs.setStringList('recentBooks', recentBooks);
+    await prefs.setStringList('$userId+recentBooks', recentBooks);
   }
-
-
-
-
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -268,10 +252,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             ),
           ),
           // Share Icon (Existing)
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(Icons.share),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: Icon(Icons.share),
+          // ),
         ],
       ),
       body: Container(
@@ -345,26 +329,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               Divider(color: AppColors.dividerColor),
               const SizedBox(height: 16),
               InkWell(
-                // onTap: () async {
-                //   // Add to recent reads before navigating
-                //   await addToRecentReads();
-                //
-                //   // Navigate to the BookReader and wait for it to complete
-                //   Navigator.push(
-                //     context,
-                //     MaterialPageRoute(
-                //       builder: (context) => BookReader(
-                //         bookTitle: widget.bookTitle,
-                //         bookAuthor: widget.bookAuthor,
-                //         bookBody: widget.bookBody,
-                //       ),
-                //     ),
-                //   );
-                // },
                   onTap: () async {
                     // Retrieve the subscription end timestamp from SharedPreferences
                     SharedPreferences prefs = await SharedPreferences.getInstance();
-                    String? endSubString = prefs.getString('endSub');
+                    String? endSubString = prefs.getString('$userId+endSub');
 
                     try {
                       if (endSubString != null) {
@@ -522,7 +490,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                 height: 120,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) =>
-                                const CircularProgressIndicator(),
+                                Center(child: const CircularProgressIndicator()),
                                 errorWidget: (context, url, error) => Container(
                                   width: 100,
                                   height: 120,
@@ -554,7 +522,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                     },
                   ),
                 ),
-
             ],
           ),
         ),

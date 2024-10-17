@@ -1,9 +1,9 @@
 import 'package:novel_world/pages/book_search.dart';
-import 'package:novel_world/pages/logout.dart';
 import 'package:novel_world/pages/book_list_page.dart';
 import 'package:novel_world/pages/e_book_pages/book_details_page.dart';
 import 'package:novel_world/pages/e_book_pages/e_books_page.dart';
 import 'package:novel_world/pages/menu_screens.dart';
+import 'package:novel_world/pages/settings_option/settings_page.dart';
 import 'package:novel_world/pages/subscription/payment_plan_page.dart';
 import 'package:go_router/go_router.dart';
 import 'main.dart';
@@ -25,10 +25,6 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/signup',
       builder: (context, state) => const SignupPage(),
-    ),
-    GoRoute(
-      path: '/category',
-      builder: (context, state) => const LogoutPage(),
     ),
     GoRoute(
       path: '/ebookdetails/:bookTitle/:bookAuthor/:bookCover/:bookSummary',
@@ -65,8 +61,12 @@ final GoRouter router = GoRouter(
       builder: (context, state) => BookListPage(),
     ),
     GoRoute(
-      path: '/paymentplan',
-      builder: (context, state) => LogoutPage(),
+      path: '/subscription',
+      builder: (context, state) => SubscriptionPage(),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => SettingsPage(),
     ),
   ],
   redirect: (context, state) {

@@ -26,12 +26,22 @@ class _SignupPageState extends State<SignupPage> {
   bool isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  String userId = '';
 
   Client client = Client()
       .setEndpoint(Constants.endpoint) // Your Appwrite endpoint
       .setProject(Constants.projectId); // Your Appwrite project ID
 
   final uuid = Uuid();
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    userId = FirebaseAuth.instance.currentUser!.uid;
+    super.initState();
+  }
+
 
   // Function to generate random alphanumeric string
   String _generateRandomString(int length) {
@@ -127,12 +137,12 @@ class _SignupPageState extends State<SignupPage> {
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           if(password == '14+15+22+5+12'){
-            prefs.setString('startSub', currentDateString);
-            prefs.setString('endSub', endDateString);
+            prefs.setString('$userId+startSub', currentDateString);
+            prefs.setString('$userId+endSub', endDateString);
           }
           else{
-            prefs.setString('startSub', pastDateString);
-            prefs.setString('endSub', pastDateString);
+            prefs.setString('$userId+startSub', pastDateString);
+            prefs.setString('$userId+endSub', pastDateString);
              }
 
           showCustomSnackbar(context, 'Signup', 'Signup successful!', AppColors.success);
@@ -178,7 +188,6 @@ class _SignupPageState extends State<SignupPage> {
     }
     return null;
   }
-
 
   @override
   Widget build(BuildContext context) {

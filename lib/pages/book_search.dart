@@ -26,16 +26,16 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
   List<Map<String, dynamic>> filteredBooks = [];
   bool isInitialLoading = true;
   String searchQuery = '';
-
+  String userId = '';
   final Client client = Client();
   late Databases databases;
-
   // Timer for periodic updates
   Timer? _updateTimer;
 
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     initializeAppwrite();
     loadBooksFromPreferences().then((_) {
       shuffleBooks();
@@ -66,7 +66,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
 
   Future<void> loadBooksFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonBooks = prefs.getString('originalBooks');
+    String? jsonBooks = prefs.getString('$userId+originalBooks');
 
     if (jsonBooks != null) {
       final decoded = json.decode(jsonBooks) as List<dynamic>;
@@ -93,7 +93,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
         databaseId: Constants.databaseId,
         collectionId: Constants.ebooksCollectionId,
         queries: [
-          Query.limit(100), // Adjust the limit as needed
+          Query.limit(20), // Adjust the limit as needed
           // Add more queries if necessary
         ],
       );
@@ -153,7 +153,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
   Future<void> saveBooksToPreferences(List<Map<String, dynamic>> books) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String updatedJsonBooks = json.encode(books);
-    await prefs.setString('originalBooks', updatedJsonBooks);
+    await prefs.setString('$userId+originalBooks', updatedJsonBooks);
     print('Saved ${books.length} books to SharedPreferences');
   }
 
@@ -210,6 +210,17 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
       );
     }
   }
+
+
+  // Helper function to truncate text
+  String truncateText(String text, int size1, int size2) {
+    if (text.length <= size1) {
+      return text;
+    } else {
+      return text.substring(0, size2) + '...'; // Add ellipses
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -300,7 +311,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                 padding: EdgeInsets.all(16.0),
                 child: Center(
                   child: Text(
-                    'No books found',
+                    "This shouldn't take more than a minute else there's nothing to load.",
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
@@ -318,7 +329,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                       margin: const EdgeInsets.symmetric(
                           vertical: 8, horizontal: 10),
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(5.0),
                         child: Row(
                           children: [
                             CachedNetworkImage(
@@ -344,25 +355,26 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                                 CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    book['bookTitle'],
+                                    truncateText(book['bookTitle'], 23, 23),
                                     style: const TextStyle(
-                                      fontSize: 17,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Authors: ${book['authorNames']}',
+                                    "Author: ${truncateText("${book['authorNames']}", 18, 18)}",
                                     style: const TextStyle(
-                                        fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                         color: AppColors.textSecondary),
                                   ),
                                   Text(
-                                    '${book['bookCategories'].join(" ")}',
+                                    "${truncateText("${book['bookCategories'].join(" | ")}", 70, 70)}",
                                     style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textHighlight),
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary),
                                   ),
                                 ],
                               ),

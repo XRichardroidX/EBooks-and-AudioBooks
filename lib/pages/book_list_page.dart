@@ -1,5 +1,3 @@
-// lib/pages/book_list_page.dart
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widget/book.dart';
 import '../widget/cached_images.dart';
+import '../widget/snack_bar_message.dart';
 import 'e_book_pages/book_details_page.dart'; // Assuming this contains your custom cache manager
 
 class BookListPage extends StatefulWidget {
@@ -20,18 +19,20 @@ class BookListPage extends StatefulWidget {
 class _BookListPageState extends State<BookListPage> {
   List<Book> recentBooks = [];
   List<Book> savedBooks = [];
+  String userId = '';
 
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     loadBooks();
   }
 
   // Load both recentBooks and savedBooks from SharedPreferences
   Future<void> loadBooks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> recentBooksJson = prefs.getStringList('recentBooks') ?? [];
-    List<String> savedBooksJson = prefs.getStringList('bookList') ?? [];
+    List<String> recentBooksJson = prefs.getStringList('$userId+recentBooks') ?? [];
+    List<String> savedBooksJson = prefs.getStringList('$userId+bookList') ?? [];
 
     List<Book> loadedRecentBooks =
     recentBooksJson.map((bookJson) => Book.fromJson(bookJson)).toList();
@@ -48,7 +49,7 @@ class _BookListPageState extends State<BookListPage> {
   // Remove a book from the savedBooks list
   Future<void> removeFromSavedBooks(Book book) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> savedBooksJson = prefs.getStringList('bookList') ?? [];
+    List<String> savedBooksJson = prefs.getStringList('$userId+bookList') ?? [];
 
     savedBooksJson.removeWhere((bookJson) {
       Book existingBook = Book.fromJson(bookJson);
@@ -56,16 +57,13 @@ class _BookListPageState extends State<BookListPage> {
           existingBook.bookAuthor == book.bookAuthor;
     });
 
-    await prefs.setStringList('bookList', savedBooksJson);
+    await prefs.setStringList('$userId+bookList', savedBooksJson);
 
     setState(() {
       savedBooks.removeWhere((b) =>
       b.bookTitle == book.bookTitle && b.bookAuthor == book.bookAuthor);
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Book removed from your saved list')),
-    );
+    showCustomSnackbar(context, 'Read List', 'Book removed from your list', AppColors.info);
   }
 
   // Navigate to BookDetailsPage
@@ -162,7 +160,7 @@ class _BookListPageState extends State<BookListPage> {
                               height: 120,
                               fit: BoxFit.cover,
                               placeholder: (context, url) =>
-                              const CircularProgressIndicator(),
+                              Center(child: const CircularProgressIndicator()),
                               errorWidget: (context, url, error) => Container(
                                 width: 100,
                                 height: 120,
@@ -224,7 +222,7 @@ class _BookListPageState extends State<BookListPage> {
                       height: 80,
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>
-                      const CircularProgressIndicator(),
+                      Center(child: const CircularProgressIndicator()),
                       errorWidget: (context, url, error) => Container(
                         width: 50,
                         height: 80,
