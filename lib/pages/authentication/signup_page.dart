@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase Authentication
 import 'package:appwrite/appwrite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../constants/app_write_constants.dart';
+import '../../constants/app_write_constants.dart';
 import 'package:uuid/uuid.dart'; // For generating unique user IDs
 
 class SignupPage extends StatefulWidget {

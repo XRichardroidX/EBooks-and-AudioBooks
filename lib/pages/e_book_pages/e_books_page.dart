@@ -11,6 +11,7 @@ import '../../constants/app_write_constants.dart';
 import '../../new_app/front_end/upload_e_books_page.dart';
 import '../../widget/book.dart';
 import '../../widget/cached_images.dart';
+import '../unable_to_upload_books_page.dart';
 import 'book_details_page.dart';
 import 'epub_reader_page.dart';
 
@@ -251,6 +252,23 @@ class _EBooksPageState extends State<EBooksPage> {
     }
   }
 
+
+  Future<String> _fetchAppVersionFromAppwrite() async {
+    try {
+      var document = await databases.getDocument(
+        databaseId: Constants.databaseId, // Replace with your database ID
+        collectionId: '671252520037c65743fb', // Replace with your collection ID
+        documentId: '67125d6e0000bde2b19a', // Replace with your document ID
+      );
+      return document.data['UPLOAD_ACCESS'];
+    } catch (e) {
+      print('Error fetching version: $e');
+      return 'false'; // Default version if fetch fails
+    }
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -268,13 +286,28 @@ class _EBooksPageState extends State<EBooksPage> {
             padding: const EdgeInsets.all(8.0),
             child: Center(
               child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const UploadEBooksPage(),
-                    ),
-                  );
+                onPressed: () async {
+                  // Fetch version from Appwrite
+                  String latestVersion = await _fetchAppVersionFromAppwrite();
+
+                  // Check if the app version matches 'v1'
+                  if (latestVersion == 'true') {
+                    // If version matches, navigate to UploadEBooksPage
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UploadEBooksPage(),
+                      ),
+                    );
+                  } else {
+                    // If version doesn't match, navigate to SorryUploadBlockedPage
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SorryUploadBlockedPage(),
+                      ),
+                    );
+                  }
                 },
                 style: ButtonStyle(
                   shape: MaterialStateProperty.all(
@@ -303,7 +336,8 @@ class _EBooksPageState extends State<EBooksPage> {
           ),
         ],
       ),
-      body: categorizedBooks.values.any((list) => list.isNotEmpty) ? RefreshIndicator(
+
+        body: categorizedBooks.values.any((list) => list.isNotEmpty) ? RefreshIndicator(
         onRefresh: () async {
           await fetchBooks();
         },

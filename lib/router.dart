@@ -1,3 +1,4 @@
+import 'package:novel_world/pages/authentication/login_page.dart';
 import 'package:novel_world/pages/book_search.dart';
 import 'package:novel_world/pages/book_list_page.dart';
 import 'package:novel_world/pages/e_book_pages/book_details_page.dart';
@@ -7,8 +8,7 @@ import 'package:novel_world/pages/settings_option/settings_page.dart';
 import 'package:novel_world/pages/subscription/payment_plan_page.dart';
 import 'package:go_router/go_router.dart';
 import 'main.dart';
-import 'pages/login_page.dart';
-import 'pages/signup_page.dart';
+import 'pages/authentication/signup_page.dart';
 
 // Set up the router
 final GoRouter router = GoRouter(
@@ -69,13 +69,4 @@ final GoRouter router = GoRouter(
       builder: (context, state) => SettingsPage(),
     ),
   ],
-  redirect: (context, state) {
-    // final isLoggedIn = checkUserLoggedInSync(); // Sync version of checking login status
-    // final loggingIn = state.matchedLocation == '/login';
-    //
-    // if (!isLoggedIn && !loggingIn) return '/login'; // Redirect to login if not logged in
-    // if (isLoggedIn && loggingIn) return '/'; // Redirect to home if already logged in
-    //
-    // return null; // No redirect
-  },
 );

@@ -2,8 +2,7 @@ import 'dart:async'; // Required for StreamController
 import 'dart:io'; // Required for Platform
 import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth for authentication
-import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
-import 'package:novel_world/pages/login_page.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:novel_world/pages/menu_screens.dart';
 import 'package:novel_world/router.dart';
 import 'package:flutter/material.dart';

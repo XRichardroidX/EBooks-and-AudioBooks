@@ -49,18 +49,18 @@ dependencies:
   archive: ^3.6.1
   cached_network_image: ^3.3.1
   flutter_localization: ^0.2.1
+  flutter_paystack_plus: ^1.0.2
+  flutter_image_compress: ^2.3.0
+  flutter_launcher_icons: ^0.11.0
 
-
-dependency_overrides:
-  args: ^2.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: "^0.11.0"
+
 
 flutter_launcher_icons:
-  android: true
+  android: "launcher_icon"
   ios: true
   image_path: "assets/images/icon.png"
 

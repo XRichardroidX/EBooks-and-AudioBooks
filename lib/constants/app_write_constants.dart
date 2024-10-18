@@ -32,7 +32,11 @@ class Constants {
   static const String cloudStorageBookCoverId = '66f60f4b001dd27104fa';
 
 
+  static const PAYSTACK_PUBLIC_KEY = 'pk_live_58453afed05725f6f914137094fc6cc6fce1c83d';
+  static const PAYSTACK_SECRET_KEY = 'sk_live_2cb5c0611da9addb24ee696a748c21788da71f09';
 
+  static const PAYSTACK_PUBLIC_TEST_KEY = 'pk_test_b6701cd1b4df226bf77b2434ae99244d7c7f5780';
+  static const PAYSTACK_SECRET_TEST_KEY = 'sk_test_adc6b961459dce45a075312db615d2a38055518f';
 
   // Firebase Constants
   String userId = userIdFromFirebase; // Replace with your Firebase  user ID

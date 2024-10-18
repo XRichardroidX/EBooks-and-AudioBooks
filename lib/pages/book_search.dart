@@ -229,53 +229,9 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text(
-          'E-Books',
+          'Search',
           style: TextStyle(color: Colors.white),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const UploadEBooksPage(),
-                    ),
-                  );
-
-                  // If UploadEBooksPage returns true, fetch latest books
-                  if (result == true) {
-                    await fetchBooks();
-                  }
-                },
-                style: ButtonStyle(
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  side: MaterialStateProperty.all(
-                    const BorderSide(color: Colors.white, width: 2),
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.add,
-                  size: 28,
-                  color: Colors.white,
-                ),
-                label: const Text(
-                  'Upload E-Books',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: fetchBooks, // Allow manual refresh
@@ -311,8 +267,11 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                 padding: EdgeInsets.all(16.0),
                 child: Center(
                   child: Text(
-                    "This shouldn't take more than a minute else there's nothing to load.",
-                    style: TextStyle(color: Colors.white),
+                    "This shouldn't take more than a minute with a strong internet else your book can't be found.",
+                    style: TextStyle(
+                      fontSize: 16,
+                        color: AppColors.textSecondary
+                    ),
                   ),
                 ),
               )

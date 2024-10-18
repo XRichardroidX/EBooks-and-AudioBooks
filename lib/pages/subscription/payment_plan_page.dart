@@ -1,12 +1,23 @@
+import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novel_world/pages/subscription/update_subscription.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
+import '../../constants/app_write_constants.dart';
 
 class SubscriptionPage extends StatelessWidget {
   const SubscriptionPage({super.key});
+
+
+
+  String generateRef() {
+    final randomCode = Random().nextInt(3234234);
+    return 'ref-$randomCode';
+  }
+
 
   // Function to handle subscription button tap
   void _onSubscribeTap(BuildContext context, String planName) async {
@@ -23,23 +34,44 @@ class SubscriptionPage extends StatelessWidget {
       return;
     }
 
+    final email = FirebaseAuth.instance.currentUser!.email;
+
+    final ref = generateRef();
+    final amount = planName == 'monthly' ? int.parse('1000') : int.parse('9500');
     try {
-      await updateSubscription(currentUser.uid, 'success');
-      showCustomSnackbar(
-        context,
-        'Payment',
-        'Payment successful for $planName Plan!',
-        AppColors.success,
-      );
+      return await FlutterPaystackPlus.openPaystackPopup(
+          publicKey: Constants.PAYSTACK_PUBLIC_KEY,
+          context: context,
+          secretKey: Constants.PAYSTACK_SECRET_KEY,
+          currency: 'NGN',
+          customerEmail: email!,
+          amount: (amount * 100).toString(),
+          reference: ref,
+          callBackUrl: "https://console.firebase.google.com/",
+          onClosed: () {
+            debugPrint('Could\'nt finish payment');
+            showCustomSnackbar(
+              context,
+              'Payment',
+              'Payment successful for $planName Plan!',
+              AppColors.error,
+            );
+          },
+          onSuccess: () async {
+            await updateSubscription(currentUser.uid, planName, 'success');
+              showCustomSnackbar(
+                context,
+                'Payment',
+                'Payment successful for $planName Plan!',
+                AppColors.success,
+              );
+
+            debugPrint('Payment successful');
+          });
     } catch (e) {
-      showCustomSnackbar(
-        context,
-        'Subscription Failed',
-        'An error occurred while updating your subscription.',
-        AppColors.error,
-      );
-      print('Error processing subscription: $e');
+      debugPrint(e.toString());
     }
+
   }
 
   @override
@@ -99,20 +131,20 @@ class SubscriptionPage extends StatelessWidget {
                 context,
                 'Monthly Plan',
                 'Unlimited books for a month',
-                '\₦900/month',
+                '\₦1000/month',
                 'Subscribe for 1 Month',
                   AppColors.textHighlight,
-                    () => _onSubscribeTap(context, 'for 1 Month'),
+                    () => _onSubscribeTap(context, 'monthly'),
               ),
               const SizedBox(height: 30),
               _buildSubscriptionPlan(
                 context,
                 'Yearly Plan',
                 'Unlimited books for 12 whole month',
-                '\₦9,000/year',
+                '\₦9,500/year',
                 'Subscribe for 1 Year',
                   AppColors.textHighlight,
-                    () => _onSubscribeTap(context, 'for 1 Year'),
+                    () => _onSubscribeTap(context, 'yearly'),
               ),
               const SizedBox(height: 40),
 

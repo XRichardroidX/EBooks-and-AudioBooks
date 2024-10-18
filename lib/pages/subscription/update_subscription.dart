@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_write_constants.dart';
 
 /// Function to check user and update subscription data
-Future<void> updateSubscription(String userId, String feedback) async {
+Future<void> updateSubscription(String userId, String type, String feedback) async {
   // Get the current signed-in Firebase user
   final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -63,8 +63,12 @@ Future<void> updateSubscription(String userId, String feedback) async {
     print('Current date (ISO8601): $currentDateString');
 
     // Calculate the end date (current date + 30 days) in ISO8601 string format
-    String endDateString = DateTime.now().add(const Duration(days: 30)).toIso8601String();
-    print('End date (ISO8601): $endDateString');
+    String endDateForAMonth = DateTime.now().add(const Duration(seconds: 10)).toIso8601String();
+    print('End date (ISO8601): $endDateForAMonth');
+
+    // Calculate the end date (current date + 30 days) in ISO8601 string format
+    String endDateForAYear = DateTime.now().add(const Duration(minutes: 1)).toIso8601String();
+    print('End date (ISO8601): $endDateForAYear');
 
     // Update the subscription details (startSub and endSub) as strings
     await databases.updateDocument(
@@ -73,11 +77,11 @@ Future<void> updateSubscription(String userId, String feedback) async {
       documentId: documentId,
       data: {
         'startSub': currentDateString,
-        'endSub': endDateString,
+        'endSub': type == 'monthly' ? endDateForAMonth : endDateForAYear,
       },
     );
     prefs.setString('$userId+startSub', '$currentDateString');
-    prefs.setString('$userId+endSub', '$endDateString');
+    type == 'monthly' ? prefs.setString('$userId+endSub', '$endDateForAMonth') : prefs.setString('$userId+endSub', '$endDateForAYear');
 
     print('Subscription updated successfully for userId: $userId');
   } catch (e) {

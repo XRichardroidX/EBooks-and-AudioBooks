@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../constants/app_write_constants.dart';
+import '../../constants/app_write_constants.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
