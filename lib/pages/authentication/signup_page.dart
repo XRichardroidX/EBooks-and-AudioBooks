@@ -38,7 +38,6 @@ class _SignupPageState extends State<SignupPage> {
   @override
   void initState() {
     // TODO: implement initState
-    userId = FirebaseAuth.instance.currentUser!.uid;
     super.initState();
   }
 
@@ -137,12 +136,12 @@ class _SignupPageState extends State<SignupPage> {
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           if(password == '14+15+22+5+12'){
-            prefs.setString('$userId+startSub', currentDateString);
-            prefs.setString('$userId+endSub', endDateString);
+            prefs.setString('$firebaseUserId+startSub', currentDateString);
+            prefs.setString('$firebaseUserId+endSub', endDateString);
           }
           else{
-            prefs.setString('$userId+startSub', pastDateString);
-            prefs.setString('$userId+endSub', pastDateString);
+            prefs.setString('$firebaseUserId+startSub', pastDateString);
+            prefs.setString('$firebaseUserId+endSub', pastDateString);
              }
 
           showCustomSnackbar(context, 'Signup', 'Signup successful!', AppColors.success);
@@ -222,6 +221,7 @@ class _SignupPageState extends State<SignupPage> {
                           // Username input
                           TextFormField(
                             controller: _usernameController,
+                            style: const TextStyle(color: AppColors.textPrimary),
                             decoration: const InputDecoration(
                               labelText: 'Username',
                               labelStyle: TextStyle(color: AppColors.textHighlight),
@@ -238,6 +238,7 @@ class _SignupPageState extends State<SignupPage> {
                           // Email input
                           TextFormField(
                             controller: _emailController,
+                            style: const TextStyle(color: AppColors.textPrimary),
                             keyboardType: TextInputType.emailAddress,
                             decoration: const InputDecoration(
                               labelText: 'Email',
@@ -251,6 +252,7 @@ class _SignupPageState extends State<SignupPage> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: !_isPasswordVisible,
+                            style: const TextStyle(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Password',
                               labelStyle: const TextStyle(color: AppColors.textHighlight),
@@ -280,6 +282,7 @@ class _SignupPageState extends State<SignupPage> {
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: !_isConfirmPasswordVisible,
+                            style: const TextStyle(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Confirm Password',
                               labelStyle: const TextStyle(color: AppColors.textHighlight),

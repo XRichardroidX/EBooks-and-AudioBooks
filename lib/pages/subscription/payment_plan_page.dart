@@ -53,7 +53,7 @@ class SubscriptionPage extends StatelessWidget {
             showCustomSnackbar(
               context,
               'Payment',
-              'Payment successful for $planName Plan!',
+              'Payment unsuccessful for $planName Plan!',
               AppColors.error,
             );
           },
@@ -65,7 +65,7 @@ class SubscriptionPage extends StatelessWidget {
                 'Payment successful for $planName Plan!',
                 AppColors.success,
               );
-
+              context.pushReplacement('/menuscreens');
             debugPrint('Payment successful');
           });
     } catch (e) {

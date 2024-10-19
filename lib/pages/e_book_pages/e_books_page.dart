@@ -257,8 +257,8 @@ class _EBooksPageState extends State<EBooksPage> {
     try {
       var document = await databases.getDocument(
         databaseId: Constants.databaseId, // Replace with your database ID
-        collectionId: '671252520037c65743fb', // Replace with your collection ID
-        documentId: '67125d6e0000bde2b19a', // Replace with your document ID
+        collectionId: Constants.configurationCollectionId, // Replace with your collection ID
+        documentId: Constants.configurationDocumentId, // Replace with your document ID
       );
       return document.data['UPLOAD_ACCESS'];
     } catch (e) {

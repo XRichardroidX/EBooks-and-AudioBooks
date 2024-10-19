@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="novel_world"
-        android:name="NovelWorld"
+        android:label="Novel World"
+        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 <!--        android:name="${applicationName}"-->
 <!--        android:icon="@mipmap/ic_launcher">-->

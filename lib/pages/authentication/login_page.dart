@@ -142,6 +142,7 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            style: const TextStyle(color: AppColors.textPrimary),
                             decoration: const InputDecoration(
                               labelText: 'Email',
                               labelStyle: TextStyle(color: AppColors.textHighlight),
@@ -160,6 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: !_isPasswordVisible, // Toggle visibility
+                            style: const TextStyle(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Password',
                               labelStyle: const TextStyle(color: AppColors.textHighlight),

@@ -63,11 +63,11 @@ Future<void> updateSubscription(String userId, String type, String feedback) asy
     print('Current date (ISO8601): $currentDateString');
 
     // Calculate the end date (current date + 30 days) in ISO8601 string format
-    String endDateForAMonth = DateTime.now().add(const Duration(seconds: 10)).toIso8601String();
+    String endDateForAMonth = DateTime.now().add(const Duration(days: 30)).toIso8601String();
     print('End date (ISO8601): $endDateForAMonth');
 
     // Calculate the end date (current date + 30 days) in ISO8601 string format
-    String endDateForAYear = DateTime.now().add(const Duration(minutes: 1)).toIso8601String();
+    String endDateForAYear = DateTime.now().add(const Duration(days: 365)).toIso8601String();
     print('End date (ISO8601): $endDateForAYear');
 
     // Update the subscription details (startSub and endSub) as strings
@@ -77,10 +77,12 @@ Future<void> updateSubscription(String userId, String type, String feedback) asy
       documentId: documentId,
       data: {
         'startSub': currentDateString,
+        'subscriptionPlan': type,
         'endSub': type == 'monthly' ? endDateForAMonth : endDateForAYear,
       },
     );
     prefs.setString('$userId+startSub', '$currentDateString');
+    prefs.setString('$userId+subscriptionPlan', '$type');
     type == 'monthly' ? prefs.setString('$userId+endSub', '$endDateForAMonth') : prefs.setString('$userId+endSub', '$endDateForAYear');
 
     print('Subscription updated successfully for userId: $userId');

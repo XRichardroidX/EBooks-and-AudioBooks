@@ -230,7 +230,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
         backgroundColor: Colors.black,
         title: const Text(
           'Search',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textHighlight),
         ),
       ),
       body: RefreshIndicator(

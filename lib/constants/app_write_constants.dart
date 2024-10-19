@@ -5,32 +5,14 @@ String userIdFromFirebase = FirebaseAuth.instance.currentUser!.uid;
 
 class Constants {
   // // AppWrite Constants
-  // static const String endpoint = 'https://cloud.appwrite.io/v1';  // Replace with your Appwrite endpoint
-  // static const String projectId = '66d3512e003a47f8b5d9';   // Replace with your Appwrite project ID
-  // static const String databaseId = '66d713d800147667742b';    // Replace with your Appwrite database ID
-  // static const String ebooksCollectionId = '66d7210e001271490533'; // Replace with your E-Books collection ID
-  // static const String audiobooksCollectionId = ''; // Replace with your AudioBooks collection ID
-  //
-  //
-  //
-  // static const String cloudStorageBookId = '66e046190000af5c2178';
-  // static const String cloudStorageBookCoverId = '66e04843002721f16c01';
-
-
-
-
-
   static const String endpoint = 'https://cloud.appwrite.io/v1';  // Replace with your Appwrite endpoint
-  static const String projectId = '66f5f98b0002c0938374';   // Replace with your Appwrite project ID
-  static const String databaseId = '66f6065500037e9d499a';    // Replace with your Appwrite database ID
-  static const String ebooksCollectionId = '66f60702000677fcd1c9'; // Replace with your E-Books collection ID
-  static const String usersCollectionId = '6706a6c800015eb3b098'; // Replace with your AudioBooks collection ID
-
-
-
-  static const String cloudStorageBookId = '66e046190000af5c2178';
-  static const String cloudStorageBookCoverId = '66f60f4b001dd27104fa';
-
+  static const String projectId = '671282e4003a91843ccf';   // Replace with your Appwrite project ID
+  static const String databaseId = '671284a4000666441c08';    // Replace with your Appwrite database ID
+  static const String ebooksCollectionId = '671284cb001febaf0848'; // Replace with your E-Books collection ID
+  static const String usersCollectionId = '671284bc002e050dc774'; // Replace with your AudioBooks collection ID
+  static const String configurationCollectionId = '671284e7001df8327063';
+  static const String configurationDocumentId = '6712855f001a7c97e1ed';
+  static const String cloudStorageBookCoverId = '6713535a000a1cd98901';
 
   static const PAYSTACK_PUBLIC_KEY = 'pk_live_58453afed05725f6f914137094fc6cc6fce1c83d';
   static const PAYSTACK_SECRET_KEY = 'sk_live_2cb5c0611da9addb24ee696a748c21788da71f09';

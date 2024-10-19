@@ -136,7 +136,7 @@ class _BookReaderState extends State<BookReader> {
 
   void _decreaseFontSize() {
     setState(() {
-      if (_fontSize > 10) _fontSize -= 1; // Decrease font size but not below 10
+      if (_fontSize > 15) _fontSize -= 1; // Decrease font size but not below 10
       _loadCurrentPage(); // Reload current page after changing font size
       _updateProgress(); // Update progress to reflect new state
     });
