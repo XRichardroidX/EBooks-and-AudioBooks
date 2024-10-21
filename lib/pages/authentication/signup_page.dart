@@ -177,13 +177,12 @@ class _SignupPageState extends State<SignupPage> {
     if (value == null || value.isEmpty) {
       return 'Please enter your email';
     }
-
     // Improved email validation pattern
     String emailPattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
     RegExp regex = RegExp(emailPattern);
 
     if (!regex.hasMatch(value)) {
-      return 'Please enter a valid email address';
+      return 'Please enter a valid email address / avoid spacing';
     }
     return null;
   }
@@ -194,6 +193,13 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
+        iconTheme: IconThemeData(
+            color: AppColors.textPrimary
+        ),
+        leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios)),
+        actions: [
+          IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_forward_ios)),
+        ],
         title: const Center(
           child: Text(
             'Signup Page',

@@ -29,8 +29,9 @@ class _BookReaderState extends State<BookReader> {
   double _progress = 0.0;
   String userId = '';
 
+  bool readMode = false;
   double _fontSize = 18; // Default font size
-  int get _wordsPerPage => (1500 / _fontSize).round(); // Adjust words per page based on font size
+  int get _wordsPerPage => (1800 / _fontSize).round(); // Adjust words per page based on font size
 
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _contentKey = GlobalKey();
@@ -41,7 +42,12 @@ class _BookReaderState extends State<BookReader> {
     userId = FirebaseAuth.instance.currentUser!.uid;
     _loadPreferences();
     _splitContentIntoWords();
-    _loadCurrentPage();
+
+    // Add the delay here before loading the current page
+    Future.delayed(Duration(milliseconds: 100), () {
+      _loadCurrentPage();
+    });
+
     _scrollController.addListener(() {
       _updateProgress();
     });
@@ -154,7 +160,9 @@ class _BookReaderState extends State<BookReader> {
       ),
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        appBar: AppBar(
+        appBar: readMode ? AppBar(
+          backgroundColor: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
+        ) : AppBar(
           backgroundColor: _isDarkMode ? AppColors.backgroundPrimary : AppColors.textPrimary,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios),
@@ -195,54 +203,63 @@ class _BookReaderState extends State<BookReader> {
         ),
         body: _isLoading
             ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
-            : Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: SelectableText(
-                    _extractedText,
-                    key: _contentKey,
-                    style: TextStyle(
-                      fontSize: _fontSize,
-                      wordSpacing: 2,
-                      color: _isDarkMode ? Colors.white : Colors.black,
+            : InkWell(
+          onTap: (){
+            setState(() {
+              if(readMode == true) readMode = false;
+              else if (readMode == false) readMode = true;
+            });
+          },
+              child: Container(
+                        color: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
+                        padding: _fontSize >= 19 ? EdgeInsets.symmetric(horizontal: 15.0, vertical: 30) : EdgeInsets.fromLTRB(20, 70, 20, 30),
+                        child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: SelectableText(
+                      _extractedText,
+                      key: _contentKey,
+                      style: TextStyle(
+                        fontSize: _fontSize,
+                        wordSpacing: 2,
+                        color: _isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF494848),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2.0),
-                child: Text(
-                  'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
-                  style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                  child: Text(
+                    'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
+                    style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _previousPage,
-                      child: Text('Previous', style: TextStyle(fontSize: 16)),
-                    ),
-                    Text(
-                      'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
-                      style: TextStyle(fontSize: 15),
-                    ),
-                    ElevatedButton(
-                      onPressed: _nextPage,
-                      child: Text('Next', style: TextStyle(fontSize: 16)),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _previousPage,
+                        child: Text('Previous', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
+                      ),
+                      Text(
+                        'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
+                        style: TextStyle(fontSize: 15),
+                      ),
+                      ElevatedButton(
+                        onPressed: _nextPage,
+                        child: Text('Next', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
+              ],
+                        ),
+                      ),
+            ),
       ),
     );
   }

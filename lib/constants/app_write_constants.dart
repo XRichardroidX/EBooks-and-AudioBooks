@@ -5,9 +5,6 @@ String userIdFromFirebase = FirebaseAuth.instance.currentUser!.uid;
 
 class Constants {
   // // AppWrite Constants
-
-
-
   // static const String endpoint = 'https://cloud.appwrite.io/v1';  // Replace with your Appwrite endpoint
   // static const String projectId = '66f5f98b0002c0938374';   // Replace with your Appwrite project ID
   // static const String databaseId = '66f6065500037e9d499a';    // Replace with your Appwrite database ID
