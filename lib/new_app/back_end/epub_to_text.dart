@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:file_picker/file_picker.dart';
@@ -23,6 +22,7 @@ Future<Map<String, dynamic>> epubToTextFromFile(PlatformFile file) async {
     };
 
     bool contentFound = false;
+    List<String> contentFilesOrder = [];
 
     for (final archiveFile in archive) {
       if (archiveFile.isFile) {
@@ -40,17 +40,19 @@ Future<Map<String, dynamic>> epubToTextFromFile(PlatformFile file) async {
           }
 
           if (archiveFile.name.endsWith('content.opf')) {
-            // Extract metadata including title and authors
+            // Extract metadata including title, authors, and manifest order
             final document = html_parser.parse(content);
             bookInfo['title'] = document.querySelector('dc\\:title')?.text ?? 'Unknown Title';
             final authors = document.querySelectorAll('dc\\:creator');
             bookInfo['authors'] = authors.map((author) => author.text).toList();
-          } else if (archiveFile.name.endsWith('.xhtml') || archiveFile.name.endsWith('.html')) {
-            final document = html_parser.parse(content);
-            final text = document.body?.text ?? '';
-            if (text.isNotEmpty) {
-              contentFound = true;
-              bookInfo['body'] += text.replaceAll('\n', '\n\n') + '\n\n';
+
+            // Extract the manifest to get the reading order of the files
+            final manifestItems = document.querySelectorAll('item');
+            for (var item in manifestItems) {
+              final href = item.attributes['href'];
+              if (href != null && (href.endsWith('.xhtml') || href.endsWith('.html'))) {
+                contentFilesOrder.add(href);
+              }
             }
           } else if (archiveFile.name.endsWith('toc.ncx')) {
             // Extract the Table of Contents
@@ -66,6 +68,26 @@ Future<Map<String, dynamic>> epubToTextFromFile(PlatformFile file) async {
           }
         } catch (e) {
           print('Error decoding file ${archiveFile.name}: $e');
+        }
+      }
+    }
+
+    // Now that we have the order of the files, process them in that order
+    for (String contentFileName in contentFilesOrder) {
+      for (final archiveFile in archive) {
+        if (archiveFile.isFile && archiveFile.name.endsWith(contentFileName)) {
+          try {
+            final content = utf8.decode(archiveFile.content);
+            final document = html_parser.parse(content);
+            final text = document.body?.text ?? '';
+            if (text.isNotEmpty) {
+              contentFound = true;
+              // Append the text without modifying the spacing or tabs
+              bookInfo['body'] += text + '\n\n';
+            }
+          } catch (e) {
+            print('Error processing file ${archiveFile.name}: $e');
+          }
         }
       }
     }

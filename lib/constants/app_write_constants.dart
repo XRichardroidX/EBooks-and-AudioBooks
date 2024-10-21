@@ -5,6 +5,18 @@ String userIdFromFirebase = FirebaseAuth.instance.currentUser!.uid;
 
 class Constants {
   // // AppWrite Constants
+
+
+
+  // static const String endpoint = 'https://cloud.appwrite.io/v1';  // Replace with your Appwrite endpoint
+  // static const String projectId = '66f5f98b0002c0938374';   // Replace with your Appwrite project ID
+  // static const String databaseId = '66f6065500037e9d499a';    // Replace with your Appwrite database ID
+  // static const String ebooksCollectionId = '66f60702000677fcd1c9'; // Replace with your E-Books collection ID
+  // static const String usersCollectionId = '6706a6c800015eb3b098'; // Replace with your AudioBooks collection ID
+  // static const String cloudStorageBookCoverId = '66f60f4b001dd27104fa';
+  // static const String configurationCollectionId = '671252520037c65743fb';
+  // static const String configurationDocumentId = '67125d6e0000bde2b19a';
+
   static const String endpoint = 'https://cloud.appwrite.io/v1';  // Replace with your Appwrite endpoint
   static const String projectId = '671282e4003a91843ccf';   // Replace with your Appwrite project ID
   static const String databaseId = '671284a4000666441c08';    // Replace with your Appwrite database ID
