@@ -28,10 +28,11 @@ class _BookReaderState extends State<BookReader> {
   int _currentPageIndex = 0;
   double _progress = 0.0;
   String userId = '';
+  int numberOfWords = 1800;
 
   bool readMode = false;
   double _fontSize = 18; // Default font size
-  int get _wordsPerPage => (1800 / _fontSize).round(); // Adjust words per page based on font size
+  int get _wordsPerPage => (numberOfWords / _fontSize).round(); // Adjust words per page based on font size
 
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _contentKey = GlobalKey();
@@ -162,7 +163,9 @@ class _BookReaderState extends State<BookReader> {
       home: Scaffold(
         appBar: readMode ? AppBar(
           backgroundColor: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
+          toolbarHeight: 5,
         ) : AppBar(
+          toolbarHeight: 35,
           backgroundColor: _isDarkMode ? AppColors.backgroundPrimary : AppColors.textPrimary,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios),
@@ -173,7 +176,7 @@ class _BookReaderState extends State<BookReader> {
           title: Text(
             widget.bookTitle,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold
             ),
             overflow: TextOverflow.ellipsis,
@@ -205,14 +208,22 @@ class _BookReaderState extends State<BookReader> {
             ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
             : InkWell(
           onTap: (){
-            setState(() {
-              if(readMode == true) readMode = false;
-              else if (readMode == false) readMode = true;
-            });
+
+              if(readMode == true){
+                readMode = false;
+                numberOfWords = _fontSize >= 18 ? 2000 : 2400;
+              }
+
+              else if (readMode == false){
+                readMode = true;
+                numberOfWords = _fontSize >= 18 ? 2100 : 2500;
+              }
+
+              setState(() {});
           },
               child: Container(
                         color: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
-                        padding: _fontSize >= 19 ? EdgeInsets.symmetric(horizontal: 15.0, vertical: 30) : EdgeInsets.fromLTRB(20, 70, 20, 30),
+                        padding: _fontSize >= 19 ? EdgeInsets.symmetric(horizontal: 15.0, vertical: 0) : (readMode ? EdgeInsets.fromLTRB(20, 0, 20, 0) : EdgeInsets.fromLTRB(20, 0, 20, 0)),
                         child: Column(
               children: [
                 Expanded(
