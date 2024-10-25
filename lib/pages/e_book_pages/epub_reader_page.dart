@@ -28,7 +28,7 @@ class _BookReaderState extends State<BookReader> {
   int _currentPageIndex = 0;
   double _progress = 0.0;
   String userId = '';
-  int numberOfWords = 1800;
+  int numberOfWords = 0;
 
   bool readMode = false;
   double _fontSize = 18; // Default font size
@@ -67,6 +67,7 @@ class _BookReaderState extends State<BookReader> {
       _isDarkMode = prefs.getBool('$userId+isDarkMode') ?? false;
       _fontSize = prefs.getDouble('$userId+fontSize') ?? 18;
       _currentPageIndex = prefs.getInt('$userId+${widget.bookTitle}+pageIndex') ?? 0;
+      numberOfWords = prefs.getInt('$userId+${widget.bookTitle}+numberOfWords') ?? 1800;
     });
   }
 
@@ -75,6 +76,7 @@ class _BookReaderState extends State<BookReader> {
     await prefs.setBool('$userId+isDarkMode', _isDarkMode);
     await prefs.setDouble('$userId+fontSize', _fontSize);
     await prefs.setInt('$userId+${widget.bookTitle}+pageIndex', _currentPageIndex);
+    await prefs.setInt('$userId+${widget.bookTitle}+numberOfWords', numberOfWords);
   }
 
   void _splitContentIntoWords() {

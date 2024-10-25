@@ -318,7 +318,7 @@ class _SignupPageState extends State<SignupPage> {
                           ElevatedButton(
                             onPressed: () => _signup(context),
                             child: const Text(
-                              'Sign up',
+                              '      SIGN UP      ',
                               style: TextStyle(color: AppColors.backgroundPrimary),
                             ),
                           ),
@@ -331,7 +331,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
             if (isLoading)
               const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(color: AppColors.buttonPrimary,),
               ),
           ],
         ),

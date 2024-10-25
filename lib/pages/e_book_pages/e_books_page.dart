@@ -395,7 +395,7 @@ class _EBooksPageState extends State<EBooksPage> {
                                     ),
                                   ),
                                   placeholder: (context, url) =>
-                                  const Center(child: CircularProgressIndicator()),
+                                  const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
                                   errorWidget: (context, url, error) =>
                                   const Icon(Icons.error),
                                 ),
@@ -502,7 +502,7 @@ class _EBooksPageState extends State<EBooksPage> {
                                           ),
                                         ),
                                         placeholder: (context, url) =>
-                                        const Center(child: CircularProgressIndicator()),
+                                        const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
                                         errorWidget: (context, url, error) =>
                                         const Icon(Icons.error),
                                       ),

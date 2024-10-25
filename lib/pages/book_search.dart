@@ -261,7 +261,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
               ),
               // Loading Indicator or List of Books
               isInitialLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,))
                   : filteredBooks.isEmpty
                   ? const Padding(
                 padding: EdgeInsets.all(16.0),
@@ -299,7 +299,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                                 height: 120,
                                 child: Center(
                                     child:
-                                    CircularProgressIndicator()),
+                                    CircularProgressIndicator(color: AppColors.buttonPrimary,)),
                               ),
                               errorWidget: (context, url, error) =>
                               const Icon(Icons.error),

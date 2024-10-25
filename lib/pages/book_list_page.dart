@@ -160,7 +160,7 @@ class _BookListPageState extends State<BookListPage> {
                               height: 120,
                               fit: BoxFit.cover,
                               placeholder: (context, url) =>
-                              Center(child: const CircularProgressIndicator()),
+                              Center(child: const CircularProgressIndicator(color: AppColors.buttonPrimary,)),
                               errorWidget: (context, url, error) => Container(
                                 width: 100,
                                 height: 120,
@@ -222,7 +222,7 @@ class _BookListPageState extends State<BookListPage> {
                       height: 80,
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>
-                      Center(child: const CircularProgressIndicator()),
+                      Center(child: const CircularProgressIndicator(color: AppColors.buttonPrimary,)),
                       errorWidget: (context, url, error) => Container(
                         width: 50,
                         height: 80,

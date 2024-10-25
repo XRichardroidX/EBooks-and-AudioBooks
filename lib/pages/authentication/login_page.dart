@@ -1,4 +1,5 @@
 import 'package:appwrite/appwrite.dart';
+import 'package:novel_world/pages/authentication/forgot_password.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
 import 'package:flutter/material.dart';
@@ -184,14 +185,33 @@ class _LoginPageState extends State<LoginPage> {
                               return null;
                             },
                           ),
+                          const SizedBox(height: 15.0),
+                          InkWell(
+                            onTap: (){
+                              context.push('/forgotpassword');
+                            },
+                            child: Container(
+                              alignment: Alignment.topRight,
+                              child: Text(
+                                  'Forgot password?',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.textHighlight
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 20.0),
 
                           // Login button
                           ElevatedButton(
                             onPressed: () => _loginWithEmailPassword(context),
                             child: const Text(
-                              'Login with Email',
-                              style: TextStyle(color: AppColors.backgroundPrimary),
+                              '         LOGIN          ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                  color: AppColors.backgroundPrimary
+                              ),
                             ),
                           ),
                         ],
@@ -205,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
                         context.push('/signup'); // Navigate to the signup page
                       },
                       child: const Text(
-                        'Create an account',
+                        'CREATE ACCOUNT',
                         style: TextStyle(color: AppColors.textHighlight),
                       ),
                     ),
@@ -217,7 +237,7 @@ class _LoginPageState extends State<LoginPage> {
             // Loading indicator
             if (isLoading)
               const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(color: AppColors.buttonPrimary,),
               ),
           ],
         ),

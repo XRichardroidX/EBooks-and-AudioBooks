@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../constants/app_write_constants.dart';
 import '../../style/colors.dart'; // Assuming you have your color styles imported
 
@@ -148,7 +146,7 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: AppColors.backgroundSecondary,
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,))
           : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

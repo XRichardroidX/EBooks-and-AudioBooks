@@ -1,3 +1,4 @@
+import 'package:novel_world/pages/authentication/forgot_password.dart';
 import 'package:novel_world/pages/authentication/login_page.dart';
 import 'package:novel_world/pages/book_search.dart';
 import 'package:novel_world/pages/book_list_page.dart';
@@ -21,6 +22,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: '/forgotpassword',
+      builder: (context, state) => const ForgotPass(),
     ),
     GoRoute(
       path: '/signup',
