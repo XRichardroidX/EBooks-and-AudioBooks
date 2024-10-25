@@ -296,7 +296,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       height: MediaQuery.of(context).size.height * 0.32,
                       fit: BoxFit.fill,
                       placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(color: AppColors.buttonPrimary,),
                       ),
                       errorWidget: (context, url, error) {
                         return Container(
@@ -490,7 +490,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                 height: 120,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) =>
-                                Center(child: const CircularProgressIndicator()),
+                                Center(child: const CircularProgressIndicator(color: AppColors.buttonPrimary,)),
                                 errorWidget: (context, url, error) => Container(
                                   width: 100,
                                   height: 120,
