@@ -74,7 +74,13 @@ Future<bool> uploadBookToDatabase({
           Permission.write(Role.any()), // Allow any user to write to the document
         ],
       );
-      Navigator.pop(context);
+      
+      Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (context) => EBooksPage(),
+  ),
+);
 
       print('Document created successfully: ${response.data}');
       return true;
