@@ -1,4 +1,4 @@
-import 'package:novel_world/pages/e_book_pages/e_books_page.dart';
+import 'package:novel_world/pages/menu_screens.dart';
 import 'dart:typed_data';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
@@ -79,7 +79,7 @@ Future<bool> uploadBookToDatabase({
       Navigator.pushReplacement(
   context,
   MaterialPageRoute(
-    builder: (context) => EBooksPage(),
+    builder: (context) => MenuScreens(),
   ),
 );
 
