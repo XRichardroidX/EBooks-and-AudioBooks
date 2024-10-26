@@ -291,7 +291,7 @@ class _EBooksPageState extends State<EBooksPage> {
                   String latestVersion = await _fetchAppVersionFromAppwrite();
 
                   // Check if the app version matches 'v1'
-                  if (latestVersion == 'true') {
+                  if (latestVersion == 'yes') {
                     // If version matches, navigate to UploadEBooksPage
                     Navigator.push(
                       context,
