@@ -22,8 +22,8 @@ class MenuScreens extends StatefulWidget {
 class _MenuScreensState extends State<MenuScreens> {
   int? _currentPage;
 
-  String appVersion = 'v1'; // Local app version
-  String AppwriteAppVersion = 'v1'; // To be fetched from Appwrite and stored locally
+  String appVersion = 'v2'; // Local app version
+  String AppwriteAppVersion = 'v2'; // To be fetched from Appwrite and stored locally
 
   late Client client;
   late Databases databases;
@@ -57,7 +57,7 @@ class _MenuScreensState extends State<MenuScreens> {
   Future<void> _loadStoredVersion() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      AppwriteAppVersion = prefs.getString('appVersion') ?? 'v1'; // Default to 'v1' if not found
+      AppwriteAppVersion = prefs.getString('appVersion') ?? 'v2'; // Default to 'v1' if not found
     });
   }
 
@@ -72,8 +72,8 @@ class _MenuScreensState extends State<MenuScreens> {
     try {
       var document = await databases.getDocument(
         databaseId: Constants.databaseId, // Replace with your database ID
-        collectionId: '671252520037c65743fb', // Replace with your collection ID
-        documentId: '67125d6e0000bde2b19a', // Replace with your document ID that contains APPLICATION_VERSION
+        collectionId: Constants.configurationCollectionId, // Replace with your collection ID
+        documentId: Constants.configurationDocumentId, // Replace with your document ID that contains APPLICATION_VERSION
       );
 
       String latestVersion = document.data['APPLICATION_VERSION'];
