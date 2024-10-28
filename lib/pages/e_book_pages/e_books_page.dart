@@ -84,7 +84,7 @@ class _EBooksPageState extends State<EBooksPage> {
     });
 
     try {
-      int limit = 100;
+      int limit = 30;
       int offset = 0;
       List<Document> allDocuments = [];
 
