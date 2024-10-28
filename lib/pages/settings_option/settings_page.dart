@@ -190,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Text(
                       "Subscribe",
                       style: TextStyle(
-                        fontSize: 16,
+                          fontSize: 16,
                           color: AppColors.textHighlight
                       ),
                     ),
@@ -252,13 +252,13 @@ void _showLogoutDialog(BuildContext context) {
       return AlertDialog(
         backgroundColor: AppColors.backgroundSecondary,
         title: const Text(
-            'Confirm Logout',
+          'Confirm Logout',
           style: TextStyle(
-            color: AppColors.textPrimary
+              color: AppColors.textPrimary
           ),
         ),
         content: const Text(
-            'Are you sure you want to log out?',
+          'Are you sure you want to log out?',
           style: TextStyle(
               color: AppColors.textSecondary
           ),
@@ -269,7 +269,7 @@ void _showLogoutDialog(BuildContext context) {
               Navigator.of(context).pop(); // Close the dialog
             },
             child: const Text(
-                'No',
+              'No',
               style: TextStyle(
                   color: AppColors.textHighlight
               ),
@@ -283,7 +283,7 @@ void _showLogoutDialog(BuildContext context) {
               context.pushReplacement('/login'); // Navigate to the login page
             },
             child: const Text(
-                'Yes',
+              'Yes',
               style: TextStyle(
                   color: AppColors.textHighlight
               ),

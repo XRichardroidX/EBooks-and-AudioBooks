@@ -94,19 +94,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
 
 
-
   @override
   void initState() {
     super.initState();
-    userId = 'FirebaseAuth.instance.currentUser!.uid';
+    userId = FirebaseAuth.instance.currentUser!.uid;
     loadBookBodyFromPreferences(widget.bookId);
     loadBooks();
     checkIfBookInList();
   }
-
-
-
-
 
 
 
