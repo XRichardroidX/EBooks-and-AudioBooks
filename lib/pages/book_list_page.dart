@@ -66,29 +66,24 @@ class _BookListPageState extends State<BookListPage> {
     showCustomSnackbar(context, 'Read List', 'Book removed from your list', AppColors.info);
   }
 
-  // Navigate to BookDetailsPage
-  void navigateToBookDetails(Book book) {
-    // Check if the user is authenticated
-    final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) {
-      // If not logged in, navigate to the login page
+  void navigateToBookDetails(Book book) async {
+
+    if (FirebaseAuth.instance.currentUser == null) {
       context.push('/login');
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              BookDetailsPage(
-                bookTitle: book.bookTitle,
-                bookAuthor: book.bookAuthor,
-                bookCover: book.bookCover,
-                bookBody: book.bookBody,
-                bookSummary: book.bookSummary,
-              ),
+          builder: (context) => BookDetailsPage(
+            bookTitle: book.bookTitle,
+            bookAuthor: book.bookAuthor,
+            bookCover: book.bookCover,
+            bookSummary: book.bookSummary,
+            bookId: book.bookId,
+          ),
         ),
       ).then((_) {
-        // Reload books when returning to refresh the list
         loadBooks();
       });
     }

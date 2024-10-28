@@ -66,7 +66,7 @@ class _EBooksPageState extends State<EBooksPage> {
     final lastFetchTime = prefs.getInt('$userId+lastFetchTime') ?? 0;
     final currentTime = DateTime.now().millisecondsSinceEpoch;
 
-    if (currentTime - lastFetchTime > Duration(seconds: 1).inMilliseconds) {
+    if (currentTime - lastFetchTime > Duration(seconds: 120).inMilliseconds) {
       await fetchBooks();
       await prefs.setInt('$userId+lastFetchTime', currentTime);
     }
@@ -75,15 +75,13 @@ class _EBooksPageState extends State<EBooksPage> {
   Future<void> fetchBooks() async {
     bool hasCache = categorizedBooks.values.any((list) => list.isNotEmpty);
 
-    if (hasCache) {
-      setState(() {
+    setState(() {
+      if (hasCache) {
         isFetching = true;
-      });
-    } else {
-      setState(() {
+      } else {
         isInitialLoading = true;
-      });
-    }
+      }
+    });
 
     try {
       int limit = 100;
@@ -94,10 +92,7 @@ class _EBooksPageState extends State<EBooksPage> {
         final response = await databases.listDocuments(
           databaseId: Constants.databaseId,
           collectionId: Constants.ebooksCollectionId,
-          queries: [
-            Query.limit(limit),
-            Query.offset(offset),
-          ],
+          queries: [Query.limit(limit), Query.offset(offset)],
         );
 
         allDocuments.addAll(response.documents);
@@ -112,33 +107,33 @@ class _EBooksPageState extends State<EBooksPage> {
       if (!mounted) return;
 
       setState(() {
-        categorizedBooks.forEach((key, value) {
-          value.clear();
-        });
+        // Clear existing books to avoid duplicates
+        categorizedBooks.forEach((key, value) => value.clear());
 
+        // Process documents and add to categories
         for (var doc in allDocuments) {
-          var bookCategories = doc.data['bookCategories'];
-
-          // Ensure bookCategories is a List of strings
+          var bookCategories = doc.data['bookCategories'] ?? [];
           if (bookCategories is String) {
-            bookCategories = [bookCategories]; // Convert string to list
-          } else if (bookCategories is! List) {
-            bookCategories = []; // Ensure it's an array if not
+            bookCategories = [bookCategories];
           }
 
           var bookData = {
-            'authorNames': doc.data['authorNames'],
-            'bookTitle': doc.data['bookTitle'],
-            'bookCoverUrl': doc.data['bookCoverUrl'],
-            'bookBody': doc.data['bookBody'],
-            'bookSummary': doc.data['bookSummary'],
+            'authorNames': doc.data['authorNames'] ?? 'Unknown Author',
+            'bookTitle': doc.data['bookTitle'] ?? 'Untitled',
+            'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
+            'bookSummary': doc.data['bookSummary'] ?? 'No summary available',
+            'bookId': doc.$id // Unique identifier for the book
           };
 
-          // Add the book to all categories it belongs to
+          String bookBody = doc.data['bookBody'] ?? '';
+          saveBookBodyToPreferences(bookData['bookId'], bookBody); // Save bookBody separately
+
           for (var category in bookCategories) {
             category = category.trim();
             if (categorizedBooks.containsKey(category)) {
-              categorizedBooks[category]?.add(bookData);
+              if (categorizedBooks[category]!.length < 30) {
+                categorizedBooks[category]!.add(bookData);
+              }
             }
           }
         }
@@ -155,10 +150,8 @@ class _EBooksPageState extends State<EBooksPage> {
       });
     } catch (e) {
       print('Error fetching books: $e');
-      if (!mounted) return;
-
       setState(() {
-        if (categorizedBooks.values.any((list) => list.isNotEmpty)) {
+        if (hasCache) {
           isFetching = false;
         } else {
           isInitialLoading = false;
@@ -166,6 +159,13 @@ class _EBooksPageState extends State<EBooksPage> {
       });
     }
   }
+
+
+  Future<void> saveBookBodyToPreferences(String bookId, String bookBody) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('bookBody+$bookId', bookBody);
+  }
+
 
   void shuffleBooks() {
     setState(() {
@@ -179,30 +179,39 @@ class _EBooksPageState extends State<EBooksPage> {
 
   Future<void> saveBooksToPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String jsonBooks = json.encode(categorizedBooks);
-    await prefs.setString('$userId+categorizedBooks', jsonBooks);
+
+    for (String category in categorizedBooks.keys) {
+      // Limit each category to 100 books
+      List<Map<String, dynamic>> books = categorizedBooks[category] ?? [];
+      if (books.length > 30) {
+        books = books.sublist(0, 30); // Keep only the first 100 books
+      }
+
+      // Store each category's books separately
+      String jsonBooks = json.encode(books);
+      await prefs.setString('categorizedBooks+$category', jsonBooks);
+    }
   }
 
   Future<void> loadBooksFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonBooks = prefs.getString('$userId+categorizedBooks');
 
-    if (jsonBooks != null) {
-      final decoded = json.decode(jsonBooks) as Map<String, dynamic>;
-      setState(() {
-        categorizedBooks = decoded.map((key, value) {
-          return MapEntry(key, List<Map<String, dynamic>>.from(value));
-        });
-        filteredBooks = categorizedBooks.values.expand((x) => x).toList();
-        shuffleBooks();
-        isInitialLoading = false;
-      });
-    } else {
-      setState(() {
-        isInitialLoading = false;
-      });
+    // Load each category individually
+    for (String category in categorizedBooks.keys) {
+      String? jsonBooks = prefs.getString('categorizedBooks+$category');
+
+      if (jsonBooks != null) {
+        categorizedBooks[category] = List<Map<String, dynamic>>.from(json.decode(jsonBooks));
+      }
     }
+
+    setState(() {
+      filteredBooks = categorizedBooks.values.expand((x) => x).toList();
+      shuffleBooks();
+      isInitialLoading = false;
+    });
   }
+
 
   String truncateText(String text) {
     if (text.length <= 20) {
@@ -226,25 +235,21 @@ class _EBooksPageState extends State<EBooksPage> {
     });
   }
 
-  void navigateToBookDetails(Book book) {
-    // Check if the user is authenticated
-    final user = FirebaseAuth.instance.currentUser;
+  void navigateToBookDetails(Book book) async {
 
-    if (user == null) {
-      // If not logged in, navigate to the login page
+    if (FirebaseAuth.instance.currentUser == null) {
       context.push('/login');
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              BookDetailsPage(
-                bookTitle: book.bookTitle,
-                bookAuthor: book.bookAuthor,
-                bookCover: book.bookCover,
-                bookBody: book.bookBody,
-                bookSummary: book.bookSummary,
-              ),
+          builder: (context) => BookDetailsPage(
+            bookTitle: book.bookTitle,
+            bookAuthor: book.bookAuthor,
+            bookCover: book.bookCover,
+            bookSummary: book.bookSummary,
+            bookId: book.bookId,
+          ),
         ),
       ).then((_) {
         loadBooks();
@@ -474,8 +479,8 @@ class _EBooksPageState extends State<EBooksPage> {
                                     bookTitle: book['bookTitle'],
                                     bookAuthor: book['authorNames'],
                                     bookCover: book['bookCoverUrl'],
-                                    bookBody: book['bookBody'],
                                     bookSummary: book['bookSummary'],
+                                    bookId: book['bookId'],
                                   ));
                                 }
                               },

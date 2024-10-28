@@ -15,15 +15,15 @@ class BookDetailsPage extends StatefulWidget {
   final String bookTitle;
   final String bookAuthor;
   final String bookCover;
-  final String bookBody;
   final String bookSummary;
+  final String bookId;
 
   const BookDetailsPage({
     required this.bookTitle,
     required this.bookAuthor,
     required this.bookCover,
-    required this.bookBody,
     required this.bookSummary,
+    required this.bookId,
     Key? key,
   }) : super(key: key);
 
@@ -35,6 +35,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   bool isExpanded = false;
   bool isBookInList = false; // To track if the book is already in the list
   String userId = '';
+  String? bookBody;
 
 
 
@@ -55,9 +56,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
 
+  Future<String?> loadBookBodyFromPreferences(String bookId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bookBody = prefs.getString('bookBody+$bookId');
+    return prefs.getString('bookBody+$bookId');
+  }
+
 
   // Navigate to BookDetailsPage
-  void navigateToBookDetails(Book book) {
+  void navigateToBookDetails(Book book) async {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -65,8 +72,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           bookTitle: book.bookTitle,
           bookAuthor: book.bookAuthor,
           bookCover: book.bookCover,
-          bookBody: book.bookBody,
           bookSummary: book.bookSummary,
+          bookId: book.bookId,
         ),
       ),
     ).then((_) {
@@ -91,10 +98,18 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   @override
   void initState() {
     super.initState();
-    userId = FirebaseAuth.instance.currentUser!.uid;
+    userId = 'FirebaseAuth.instance.currentUser!.uid';
+    loadBookBodyFromPreferences(widget.bookId);
     loadBooks();
     checkIfBookInList();
   }
+
+
+
+
+
+
+
 
   // Check if the current book is already in the booklist
   Future<void> checkIfBookInList() async {
@@ -123,8 +138,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       bookTitle: widget.bookTitle,
       bookAuthor: widget.bookAuthor,
       bookCover: widget.bookCover,
-      bookBody: widget.bookBody,
       bookSummary: widget.bookSummary,
+      bookId: widget.bookId,
     );
 
     // Check for duplicates
@@ -174,8 +189,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       bookTitle: widget.bookTitle,
       bookAuthor: widget.bookAuthor,
       bookCover: widget.bookCover,
-      bookBody: widget.bookBody,
       bookSummary: widget.bookSummary,
+      bookId: widget.bookId,
     );
 
     // Remove the book if it already exists to avoid duplicates
@@ -335,6 +350,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                     String? endSubString = prefs.getString('$userId+endSub');
 
                     try {
+
                       if (endSubString != null) {
                         // Convert the endSub string back to a DateTime object
                         DateTime endSubDate = DateTime.parse(endSubString);
@@ -360,7 +376,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               builder: (context) => BookReader(
                                 bookTitle: widget.bookTitle,
                                 bookAuthor: widget.bookAuthor,
-                                bookBody: widget.bookBody,
+                                bookBody: bookBody ?? 'No Book Content Found',
                               ),
                             ),
                           );

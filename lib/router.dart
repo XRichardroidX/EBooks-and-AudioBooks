@@ -38,14 +38,15 @@ final GoRouter router = GoRouter(
         final bookAuthor = state.pathParameters['bookAuthor'] ?? 'Unknown Author';
         final bookCover = state.pathParameters['bookCover'] ?? '';
         final bookSummary = state.pathParameters['bookSummary'] ?? '';
+        final bookId = state.pathParameters['bookId'] ?? 'No Book ID found';
         final bookBody = state.extra as String? ?? 'Empty Content';
 
         return BookDetailsPage(
           bookTitle: bookTitle,
           bookAuthor: bookAuthor,
           bookCover: bookCover,
-          bookBody: bookBody,
           bookSummary: bookSummary,
+          bookId: bookId,
         );
       },
     ),

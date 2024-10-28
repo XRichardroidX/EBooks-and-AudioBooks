@@ -66,7 +66,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
 
   Future<void> loadBooksFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonBooks = prefs.getString('$userId+originalBooks');
+    String? jsonBooks = prefs.getString('originalBooks');
 
     if (jsonBooks != null) {
       final decoded = json.decode(jsonBooks) as List<dynamic>;
@@ -93,7 +93,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
         databaseId: Constants.databaseId,
         collectionId: Constants.ebooksCollectionId,
         queries: [
-          Query.limit(20), // Adjust the limit as needed
+          Query.limit(200), // Adjust the limit as needed
           // Add more queries if necessary
         ],
       );
@@ -103,7 +103,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
           'bookTitle': doc.data['bookTitle'] ?? '',
           'authorNames': doc.data['authorNames'] ?? '',
           'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
-          'bookBody': doc.data['bookBody'] ?? '',
+          'bookId': doc.$id,
           'bookSummary': doc.data['bookSummary'] ?? '',
           'bookCategories': doc.data['bookCategories'] ?? '',
         };
@@ -153,7 +153,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
   Future<void> saveBooksToPreferences(List<Map<String, dynamic>> books) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String updatedJsonBooks = json.encode(books);
-    await prefs.setString('$userId+originalBooks', updatedJsonBooks);
+    await prefs.setString('originalBooks', updatedJsonBooks);
     print('Saved ${books.length} books to SharedPreferences');
   }
 
@@ -187,7 +187,10 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
     print('Filtered books with query: "$query"');
   }
 
-  void navigateToBookDetails(Map<String, dynamic> book) {
+
+
+
+  void navigateToBookDetails(Map<String, dynamic> book) async {
     // Check if the user is authenticated
     final user = FirebaseAuth.instance.currentUser;
 
@@ -203,8 +206,8 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                 bookTitle: book['bookTitle'],
                 bookAuthor: book['authorNames'],
                 bookCover: book['bookCoverUrl'],
-                bookBody: book['bookBody'],
                 bookSummary: book['bookSummary'],
+                bookId: book['bookId'],
               ),
         ),
       );

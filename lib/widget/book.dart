@@ -6,15 +6,15 @@ class Book {
   final String bookTitle;
   final String bookAuthor;
   final String bookCover;
-  final String bookBody;
   final String bookSummary;
+  final String bookId;
 
   Book({
     required this.bookTitle,
     required this.bookAuthor,
     required this.bookCover,
-    required this.bookBody,
     required this.bookSummary,
+    required this.bookId,
   });
 
   // Convert a Book into a Map. The keys must correspond to the names of the JSON keys.
@@ -23,8 +23,8 @@ class Book {
       'bookTitle': bookTitle,
       'bookAuthor': bookAuthor,
       'bookCover': bookCover,
-      'bookBody': bookBody,
       'bookSummary': bookSummary,
+      'bookId': bookId,
     };
   }
 
@@ -34,8 +34,8 @@ class Book {
       bookTitle: map['bookTitle'] ?? '',
       bookAuthor: map['bookAuthor'] ?? '',
       bookCover: map['bookCover'] ?? '',
-      bookBody: map['bookBody'] ?? '',
       bookSummary: map['bookSummary'] ?? '',
+      bookId: map['bookId'] ?? 'No Id',
     );
   }
 
