@@ -371,7 +371,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               builder: (context) => BookReader(
                                 bookTitle: widget.bookTitle,
                                 bookAuthor: widget.bookAuthor,
-                                bookBody: bookBody ?? 'No Book Content Found',
+                                bookBody: bookBody ?? 'No Book Content Found'!,
                               ),
                             ),
                           );
