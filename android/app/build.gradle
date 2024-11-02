@@ -55,6 +55,9 @@ android {
         }
     }
 }
+ext {
+    kotlin_version = '1.9.0' // Define Kotlin version here
+}
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version" //Added this to keystore build error on codemagic
 }
