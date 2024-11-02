@@ -1,0 +1,57 @@
+workflows:
+  # Web Workflow for building the web app
+  web-workflow:
+    name: Web Workflow
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build Web
+        script: |
+          set -e
+          echo "Starting Web Build..."
+          flutter build web --release
+          if [ $? -ne 0 ]; then
+            echo "Flutter web build failed"
+            exit 1
+          fi
+          echo "Web build completed successfully"
+    artifacts:
+      - build/web/**
+    publishing:
+      email:
+        recipients:
+          - novelworldapplication@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # Android Workflow for building the Android app
+  android-workflow:
+    name: Android Workflow
+    environment:
+      android_signing:
+        - needlink
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build Android AppBundle
+        script: |
+          flutter build appbundle --release
+      - name: Build Android APK
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - novelworldapplication@gmail.com
+        notify:
+          success: true
+          failure: true
