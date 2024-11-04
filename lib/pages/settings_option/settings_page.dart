@@ -245,6 +245,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
+
+
 void _showLogoutDialog(BuildContext context) {
   showDialog(
     context: context,
