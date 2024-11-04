@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:appwrite/appwrite.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../widget/snack_bar_message.dart';
+import '../user_admin_communication/book_recommendation_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_write_constants.dart';
-import '../../style/colors.dart'; // Assuming you have your color styles imported
+import '../../style/colors.dart';
+import '../user_admin_communication/FAQs.dart';
+import '../user_admin_communication/question_list.dart';
+import '../user_admin_communication/users_questions.dart'; // Assuming you have your color styles imported
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -147,105 +154,227 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,))
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              userName.toUpperCase(),
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              userEmail,
-              style: TextStyle(
-                fontSize: 18,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isSubscriptionActive() ? "Subscription Active" : "Subscription Inactive",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: isSubscriptionActive() ? AppColors.success : AppColors.textHighlight,
-                  ),
+          : SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                userName.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
-                if (!isSubscriptionActive())
-                  ElevatedButton(
-                    onPressed: () {
-                      context.push('/subscription'); // Navigate to subscription page
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success, // Button color
+              ),
+              SizedBox(height: 8),
+              Text(
+                userEmail,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isSubscriptionActive() ? "Subscription Active" : "Subscription Inactive",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isSubscriptionActive() ? AppColors.success : AppColors.textHighlight,
                     ),
-                    child: Text(
-                      "Subscribe",
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.textHighlight
+                  ),
+                  if (!isSubscriptionActive())
+                    ElevatedButton(
+                      onPressed: () {
+                        context.push('/subscription'); // Navigate to subscription page
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success, // Button color
+                      ),
+                      child: Text(
+                        "Subscribe",
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.textHighlight
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            SizedBox(height: 32),
-            Divider(),
-            ListTile(
-              title: Text(
-                'Recommend us a book',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                ],
               ),
-              onTap: () {
-                // Navigate to the book recommendation page
-              },
-            ),
-            Divider(),
-            ListTile(
-              title: Text(
-                'Tell us anything',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+              SizedBox(height: 32),
+              Divider(),
+              ListTile(
+                title: Text(
+                  'Recommend us a book',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                ),
+                onTap: () {
+                  // Navigate to the book recommendation page
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => BookRecommendationPage())
+                  );
+                },
               ),
-              onTap: () {
-                // Navigate to feedback page
-              },
-            ),
-            Divider(),
-            ListTile(
-              title: Text(
-                'FAQs',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+              Divider(),
+              ListTile(
+                title: Text(
+                  'Tell us anything',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                ),
+                onTap: () {
+                  _launchEmail(receiverEmail: 'needlinkcustomerservice@gmail.com'); // Call the function to launch email
+                },
               ),
-              onTap: () {
-                // Navigate to FAQs page
-              },
-            ),
-            Divider(),
-            ListTile(
-              title: Text(
-                'Log Out',
-                style: TextStyle(color: AppColors.textHighlight, fontSize: 18),
+              Divider(),
+              ListTile(
+                title: Text(
+                  'Have a question?',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                ),
+                onTap: () {
+                  // Navigate to feedback page
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => QuestionSubmissionPage())
+                  );
+                },
               ),
-              onTap: () {
-                _showLogoutDialog(context);
-              },
-            ),
-          ],
+              Divider(),
+              ListTile(
+                title: Text(
+                  'Answer users question',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                ),
+                onTap: () {
+                  // Navigate to feedback page
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => QuestionsListPage())
+                  );
+                },
+              ),
+              Divider(),
+              ListTile(
+                title: Text(
+                  'FAQs',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                ),
+                onTap: () {
+                  // Navigate to FAQs page
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => FAQsPage())
+                  );
+                },
+              ),
+              Divider(),
+              ListTile(
+                title: Text(
+                  'Log Out',
+                  style: TextStyle(color: AppColors.textHighlight, fontSize: 18),
+                ),
+                onTap: () {
+                  _showLogoutDialog(context);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+
+
+
+
+
+
+  void _launchEmail({required String receiverEmail}) async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: receiverEmail,
+      query: encodeQueryParameters({
+        'subject': 'Novel City User',
+        'body': 'Please enter your message here.',
+      }),
+    );
+
+    try {
+      // Launch the email client
+      if (await canLaunchUrl(emailLaunchUri)) {
+        await launchUrl(emailLaunchUri);
+      } else {
+        showCustomSnackbar(context, 'Email Linking', 'Email client not found on this device', AppColors.warning);
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppColors.backgroundSecondary,
+            title: Text(
+              'Email Client Not Found',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'You can reach us on \n $receiverEmail',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.copy, color: AppColors.textHighlight),
+                  onPressed: () {
+                    showCustomSnackbar(context, 'Copy', 'Email copied to clipboard', AppColors.success);
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'OK',
+                  style: TextStyle(color: AppColors.textHighlight, fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        //  throw 'Email client not found on this device';
+      }
+    } catch (e) {
+      // Handle exception by showing a message to the user
+      print('Could not launch email client: $e');
+      showCustomSnackbar(context, 'Linking Email', '$e', AppColors.error);
+    }
+  }
+
+
+
+
+  String? encodeQueryParameters(Map<String, String> params) {
+    return params.entries
+        .map((MapEntry<String, String> e) =>
+    '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+  }
+
+
+
+
+
 }
-
-
 
 void _showLogoutDialog(BuildContext context) {
   showDialog(
