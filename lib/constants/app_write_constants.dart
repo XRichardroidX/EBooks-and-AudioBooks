@@ -16,8 +16,8 @@ class Constants {
   // static const String configurationCollectionId = '671252520037c65743fb';
   // static const String configurationDocumentId = '67125d6e0000bde2b19a';
 
-  // static const String recommendCollectionId = '672786ef0004ed30f041';
-  // static const String questionCollectionId = '672795ed00195f68c25e';
+  static const String recommendCollectionId = '672786ef0004ed30f041';
+  static const String questionCollectionId = '672795ed00195f68c25e';
 
 
   static const String endpoint = 'https://cloud.appwrite.io/v1';  // Replace with your Appwrite endpoint
