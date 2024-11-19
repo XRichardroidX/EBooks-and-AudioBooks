@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:archive/archive.dart';
 import 'package:html/parser.dart' as html_parser;
@@ -14,74 +13,85 @@ Future<Map<String, dynamic>> epubToTextFromFile(PlatformFile file) async {
 
     final archive = ZipDecoder().decodeBytes(epubBytes);
     Map<String, dynamic> bookInfo = {
-      'title': '',
+      'title': 'Unknown Title',
       'authors': [],
       'tableOfContents': [],
       'body': '',
     };
 
-    List<String> contentFilesOrder = [];
+    List<Map<String, String>> chapters = []; // To store chapter files and content
 
-    // Process the archive to extract metadata and determine file order
+    print('Archive files: ${archive.map((file) => file.name).toList()}');
+
+    // Pass 1: Extract metadata (title, authors)
     for (final archiveFile in archive) {
-      if (archiveFile.isFile) {
-        try {
-          if (archiveFile.name.endsWith('content.opf')) {
-            final content = utf8.decode(archiveFile.content);
-            final document = html_parser.parse(content);
+      if (archiveFile.isFile && archiveFile.name.endsWith('content.opf')) {
+        final content = utf8.decode(archiveFile.content);
+        final document = html_parser.parse(content);
 
-            // Extract title and authors
-            bookInfo['title'] = document.querySelector('dc\\:title')?.text ?? 'Unknown Title';
-            final authors = document.querySelectorAll('dc\\:creator');
-            bookInfo['authors'] = authors.map((author) => author.text).toList();
+        // Extract title
+        bookInfo['title'] = document.querySelector('dc\\:title')?.text ?? 'Unknown Title';
+        print('Title: ${bookInfo['title']}');
 
-            // Extract reading order
-            final spineItems = document.querySelectorAll('spine > itemref');
-            final manifestItems = document.querySelectorAll('manifest > item');
-            final hrefMap = {
-              for (var item in manifestItems)
-                item.attributes['id']: item.attributes['href']
-            };
-
-            for (var spineItem in spineItems) {
-              final idRef = spineItem.attributes['idref'];
-              if (idRef != null && hrefMap.containsKey(idRef)) {
-                contentFilesOrder.add(hrefMap[idRef]!);
-              }
-            }
-          }
-        } catch (e) {
-          print('Error decoding metadata: $e');
-        }
+        // Extract authors
+        final authors = document.querySelectorAll('dc\\:creator');
+        bookInfo['authors'] = authors.map((author) => author.text).toList();
+        print('Authors: ${bookInfo['authors']}');
       }
     }
 
-    // Process the files in the specified order
-    for (String contentFileName in contentFilesOrder) {
-      final matchingFile = archive.firstWhere(
-            (archiveFile) =>
-        archiveFile.isFile && archiveFile.name.contains(contentFileName),
-        orElse: () => throw Exception('File not found: $contentFileName'),
-      );
-
-      if (matchingFile != null) {
+    // Pass 2: Identify chapter files
+    for (final archiveFile in archive) {
+      if (archiveFile.isFile &&
+          (archiveFile.name.endsWith('.xhtml') || archiveFile.name.endsWith('.html'))) {
         try {
-          final content = utf8.decode(matchingFile.content);
+          final content = utf8.decode(archiveFile.content);
           final document = html_parser.parse(content);
-          final text = document.body?.text ?? '';
+
+          // Check for meaningful content
+          final text = document.body?.text?.trim() ?? '';
           if (text.isNotEmpty) {
-            bookInfo['body'] += text + '\n\n';
+            chapters.add({
+              'fileName': archiveFile.name,
+              'content': text,
+            });
           }
         } catch (e) {
-          print('Error processing file $contentFileName: $e');
+          print('Error processing file ${archiveFile.name}: $e');
         }
       }
     }
 
-    if (bookInfo['body'].isEmpty) {
-      bookInfo['body'] = 'No content found in the EPUB.';
+    // Natural sorting of chapters by filename
+    chapters.sort((a, b) {
+      // Extract numeric parts if filenames contain chapter numbers
+      final regex = RegExp(r'\d+');
+      final aMatch = regex.firstMatch(a['fileName']!);
+      final bMatch = regex.firstMatch(b['fileName']!);
+
+      if (aMatch != null && bMatch != null) {
+        // Compare numbers if available
+        return int.parse(aMatch.group(0)!).compareTo(int.parse(bMatch.group(0)!));
+      } else {
+        // Fallback to lexicographical comparison
+        return a['fileName']!.compareTo(b['fileName']!);
+      }
+    });
+
+    print('Sorted Chapters: ${chapters.map((c) => c['fileName']).toList()}');
+
+    // Pass 3: Combine chapters into book body
+    for (var chapter in chapters) {
+      bookInfo['body'] += chapter['content']! + '\n\n';
+      bookInfo['tableOfContents'].add(chapter['fileName']?.replaceAll('.xhtml', '')); // Add chapter names to TOC
     }
 
+    // Final checks
+    if (bookInfo['body']!.isEmpty) {
+      bookInfo['body'] = 'No readable content found in the EPUB.';
+    }
+
+    print('Book Body Length: ${bookInfo['body']!.length}');
     return bookInfo;
   } catch (e) {
     print('Error reading EPUB file: $e');
