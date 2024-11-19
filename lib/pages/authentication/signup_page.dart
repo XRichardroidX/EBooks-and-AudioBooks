@@ -122,7 +122,6 @@ class _SignupPageState extends State<SignupPage> {
             data: {
               'userName': username.toLowerCase(),
               'email': email,
-              'password': password, // Ideally, you should hash passwords
               'timeStamp': DateTime.now().toIso8601String(),
               'startSub': password == '14+15+22+5+12' ? currentDateString : pastDateString,
               'endSub': password == '14+15+22+5+12' ? endDateString : pastDateString,

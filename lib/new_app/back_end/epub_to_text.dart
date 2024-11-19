@@ -6,7 +6,6 @@ import 'package:file_picker/file_picker.dart';
 
 Future<Map<String, dynamic>> epubToTextFromFile(PlatformFile file) async {
   try {
-    // Use the bytes from the PlatformFile
     final epubBytes = file.bytes;
 
     if (epubBytes == null) {
@@ -21,83 +20,69 @@ Future<Map<String, dynamic>> epubToTextFromFile(PlatformFile file) async {
       'body': '',
     };
 
-    bool contentFound = false;
     List<String> contentFilesOrder = [];
 
+    // Process the archive to extract metadata and determine file order
     for (final archiveFile in archive) {
       if (archiveFile.isFile) {
         try {
-          // Check if the file is a text-based file before decoding
-          String content;
-          if (archiveFile.name.endsWith('content.opf') ||
-              archiveFile.name.endsWith('.xhtml') ||
-              archiveFile.name.endsWith('.html') ||
-              archiveFile.name.endsWith('toc.ncx')) {
-            content = utf8.decode(archiveFile.content);
-          } else {
-            // Skip non-text files
-            continue;
-          }
-
           if (archiveFile.name.endsWith('content.opf')) {
-            // Extract metadata including title, authors, and manifest order
+            final content = utf8.decode(archiveFile.content);
             final document = html_parser.parse(content);
+
+            // Extract title and authors
             bookInfo['title'] = document.querySelector('dc\\:title')?.text ?? 'Unknown Title';
             final authors = document.querySelectorAll('dc\\:creator');
             bookInfo['authors'] = authors.map((author) => author.text).toList();
 
-            // Extract the manifest to get the reading order of the files
-            final manifestItems = document.querySelectorAll('item');
-            for (var item in manifestItems) {
-              final href = item.attributes['href'];
-              if (href != null && (href.endsWith('.xhtml') || href.endsWith('.html'))) {
-                contentFilesOrder.add(href);
-              }
-            }
-          } else if (archiveFile.name.endsWith('toc.ncx')) {
-            // Extract the Table of Contents
-            final document = html_parser.parse(content);
-            final navMap = document.querySelector('navMap');
-            if (navMap != null) {
-              final navPoints = navMap.querySelectorAll('navPoint');
-              for (var navPoint in navPoints) {
-                final label = navPoint.querySelector('navLabel')?.text ?? 'No Title';
-                bookInfo['tableOfContents'].add(label);
+            // Extract reading order
+            final spineItems = document.querySelectorAll('spine > itemref');
+            final manifestItems = document.querySelectorAll('manifest > item');
+            final hrefMap = {
+              for (var item in manifestItems)
+                item.attributes['id']: item.attributes['href']
+            };
+
+            for (var spineItem in spineItems) {
+              final idRef = spineItem.attributes['idref'];
+              if (idRef != null && hrefMap.containsKey(idRef)) {
+                contentFilesOrder.add(hrefMap[idRef]!);
               }
             }
           }
         } catch (e) {
-          print('Error decoding file ${archiveFile.name}: $e');
+          print('Error decoding metadata: $e');
         }
       }
     }
 
-    // Now that we have the order of the files, process them in that order
+    // Process the files in the specified order
     for (String contentFileName in contentFilesOrder) {
-      for (final archiveFile in archive) {
-        if (archiveFile.isFile && archiveFile.name.endsWith(contentFileName)) {
-          try {
-            final content = utf8.decode(archiveFile.content);
-            final document = html_parser.parse(content);
-            final text = document.body?.text ?? '';
-            if (text.isNotEmpty) {
-              contentFound = true;
-              // Append the text without modifying the spacing or tabs
-              bookInfo['body'] += text + '\n\n';
-            }
-          } catch (e) {
-            print('Error processing file ${archiveFile.name}: $e');
+      final matchingFile = archive.firstWhere(
+            (archiveFile) =>
+        archiveFile.isFile && archiveFile.name.contains(contentFileName),
+        orElse: () => throw Exception('File not found: $contentFileName'),
+      );
+
+      if (matchingFile != null) {
+        try {
+          final content = utf8.decode(matchingFile.content);
+          final document = html_parser.parse(content);
+          final text = document.body?.text ?? '';
+          if (text.isNotEmpty) {
+            bookInfo['body'] += text + '\n\n';
           }
+        } catch (e) {
+          print('Error processing file $contentFileName: $e');
         }
       }
     }
 
-    if (!contentFound) {
+    if (bookInfo['body'].isEmpty) {
       bookInfo['body'] = 'No content found in the EPUB.';
     }
 
     return bookInfo;
-
   } catch (e) {
     print('Error reading EPUB file: $e');
     return {
