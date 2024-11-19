@@ -90,7 +90,6 @@ Future<Map<String, dynamic>> epubToTextFromFile(PlatformFile file) async {
     if (bookInfo['body']!.isEmpty) {
       bookInfo['body'] = 'No readable content found in the EPUB.';
     }
-
     print('Book Body Length: ${bookInfo['body']!.length}');
     return bookInfo;
   } catch (e) {
