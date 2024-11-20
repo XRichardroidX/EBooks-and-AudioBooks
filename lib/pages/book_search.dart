@@ -270,7 +270,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                 padding: EdgeInsets.all(16.0),
                 child: Center(
                   child: Text(
-                    "This shouldn't take more than a minute with a strong internet else your book can't be found.",
+                    "",
                     style: TextStyle(
                       fontSize: 16,
                         color: AppColors.textSecondary
