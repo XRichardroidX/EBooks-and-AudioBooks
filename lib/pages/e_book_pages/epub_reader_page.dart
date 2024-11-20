@@ -49,6 +49,12 @@ class _BookReaderState extends State<BookReader> {
       _loadCurrentPage();
     });
 
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        readMode = true;
+      });
+    });
+
     _scrollController.addListener(() {
       _updateProgress();
     });
@@ -122,6 +128,12 @@ class _BookReaderState extends State<BookReader> {
         _updateProgress();
       });
     }
+    readMode = false;
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        readMode = true;
+      });
+    });
   }
 
   void _nextPage() {
@@ -133,6 +145,12 @@ class _BookReaderState extends State<BookReader> {
         _updateProgress();
       });
     }
+    readMode = false;
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        readMode = true;
+      });
+    });
   }
 
   void _increaseFontSize() {
@@ -242,34 +260,62 @@ class _BookReaderState extends State<BookReader> {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2.0),
-                              child: Text(
-                                'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
-                                style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                !readMode ? Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                  child: Text(
+                                    'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
+                                    style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 14),
+                                  ),
+                                )
+                                    :
+                                Container(),
+                                !readMode ? Text(
+                                  'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
+                                  style: TextStyle(fontSize: 14),
+                                )
+                                    :
+                                Container(),
+                              ],
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  ElevatedButton(
+                                  readMode ? ElevatedButton(
                                     onPressed: _previousPage,
                                     child: Text('Previous', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
-                                  ),
-                                  Text(
-                                    'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                  ElevatedButton(
+                                  )
+                                      :
+                                  Container(),
+                                  readMode ? Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                    child: Text(
+                                      'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
+                                      style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 14),
+                                    ),
+                                  )
+                                      :
+                                  Container(),
+                                  // !readMode ? Text(
+                                  //   'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
+                                  //   style: TextStyle(fontSize: 14),
+                                  // )
+                                  // :
+                                  // Container(),
+                                  readMode ? ElevatedButton(
                                     onPressed: _nextPage,
                                     child: Text('Next', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
-                                  ),
+                                  )
+                                  :
+                                  Container(),
                                 ],
                               ),
                             ),
-                            Padding(
+                            !readMode ? Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
                               child: Slider(
                                 value: _currentPageIndex.toDouble(),
@@ -284,7 +330,9 @@ class _BookReaderState extends State<BookReader> {
                                   });
                                 },
                               ),
-                            ),
+                            )
+                                :
+                            Container(),
                           ],
                         ),
                       ),
