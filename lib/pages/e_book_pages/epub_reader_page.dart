@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,6 +51,12 @@ class _BookReaderState extends State<BookReader> {
       _loadCurrentPage();
     });
 
+    Future.delayed(Duration(seconds: 3), () {
+      setState(() {
+        readMode = true;
+      });
+    });
+
     _scrollController.addListener(() {
       _updateProgress();
     });
@@ -67,7 +75,7 @@ class _BookReaderState extends State<BookReader> {
       _isDarkMode = prefs.getBool('$userId+isDarkMode') ?? false;
       _fontSize = prefs.getDouble('$userId+fontSize') ?? 18;
       _currentPageIndex = prefs.getInt('$userId+${widget.bookTitle}+pageIndex') ?? 0;
-      numberOfWords = prefs.getInt('$userId+${widget.bookTitle}+numberOfWords') ?? 1800;
+      numberOfWords = prefs.getInt('$userId+${widget.bookTitle}+numberOfWords') ?? 2000;
     });
   }
 
@@ -165,9 +173,56 @@ class _BookReaderState extends State<BookReader> {
       home: Scaffold(
         appBar: readMode ? AppBar(
           backgroundColor: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
-          toolbarHeight: 5,
+          actions: [
+            InkWell(
+              onTap: (){
+                setState(() {
+                  readMode = false;
+                });
+              },
+              child: Container(
+                margin: EdgeInsets.only(right: 18.0),
+                decoration: BoxDecoration(
+                  color: _isDarkMode ? Color(0xFF494848) : Color(0xFFFAF5EF),
+                  borderRadius: BorderRadius.circular(20), // Circular shape
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black54.withOpacity(0.1),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3), // Shadow position
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.only(right: 8.0), // Adjust padding to center content
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, // Make the button size based on content
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: Icon(
+                          Icons.lock_open,
+                          color: _isDarkMode ? AppColors.iconColor : Color(0xFF494848),
+                        ),
+                    ),
+                    Text(
+                      'unlock',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _isDarkMode ? AppColors.iconColor : Color(0xFF494848),
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+
+            )
+          ],
+          toolbarHeight: 38,
         ) : AppBar(
-          toolbarHeight: 35,
+          toolbarHeight: 40,
           backgroundColor: _isDarkMode ? AppColors.backgroundPrimary : AppColors.textPrimary,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios),
@@ -178,12 +233,57 @@ class _BookReaderState extends State<BookReader> {
           title: Text(
             widget.bookTitle,
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold
+                fontSize: 18,
+                fontWeight: FontWeight.bold
             ),
             overflow: TextOverflow.ellipsis,
           ),
           actions: [
+            InkWell(
+              onTap: (){
+                setState(() {
+                  readMode = true;
+                });
+              },
+              child: Container(
+                margin: EdgeInsets.only(right: 18.0),
+                decoration: BoxDecoration(
+                  color: _isDarkMode ? Color(0xFF494848) : Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(20), // Circular shape
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3), // Shadow position
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.only(right: 10.0), // Adjust padding to center content
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, // Make the button size based on content
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.remove_red_eye_outlined,
+                        color: _isDarkMode ? AppColors.iconColor : AppColors.textHighlight,
+                      ),
+                    ),
+                    Text(
+                      'Read Mode',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: _isDarkMode ? AppColors.iconColor : AppColors.textHighlight,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+
+            ),
             IconButton(
               icon: Icon(_isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
               onPressed: () {
@@ -211,22 +311,22 @@ class _BookReaderState extends State<BookReader> {
             : InkWell(
           onTap: (){
 
-              if(readMode == true){
-                readMode = false;
-                numberOfWords = _fontSize >= 18 ? 2000 : 2400;
-              }
-
-              else if (readMode == false){
-                readMode = true;
-                numberOfWords = _fontSize >= 18 ? 2100 : 2500;
-              }
-
-              setState(() {});
+            // if(readMode == true){
+            //   readMode = false;
+            //   numberOfWords = _fontSize >= 18 ? 2000 : 2400;
+            // }
+            //
+            // else if (readMode == false){
+            //   readMode = true;
+            //   numberOfWords = _fontSize >= 18 ? 2100 : 2500;
+            // }
+            //
+            // setState(() {});
           },
-              child: Container(
-                        color: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
-                        padding: _fontSize >= 19 ? EdgeInsets.symmetric(horizontal: 15.0, vertical: 0) : (readMode ? EdgeInsets.fromLTRB(20, 0, 20, 0) : EdgeInsets.fromLTRB(20, 0, 20, 0)),
-                        child: Column(
+          child: Container(
+            color: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
+            padding: _fontSize >= 19 ? EdgeInsets.symmetric(horizontal: 15.0, vertical: 0) : (readMode ? EdgeInsets.fromLTRB(20, 0, 20, 0) : EdgeInsets.fromLTRB(20, 0, 20, 0)),
+            child: Column(
               children: [
                 Expanded(
                   child: SingleChildScrollView(
@@ -242,37 +342,89 @@ class _BookReaderState extends State<BookReader> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2.0),
-                  child: Text(
-                    'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
-                    style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    !readMode ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2.0),
+                      child: Text(
+                        'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
+                        style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 14),
+                      ),
+                    )
+                        :
+                    Container(),
+                    !readMode ? Text(
+                      'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
+                      style: TextStyle(fontSize: 14),
+                    )
+                        :
+                    Container(),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ElevatedButton(
-                        onPressed: _previousPage,
-                        child: Text('Previous', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
-                      ),
-                      Text(
-                        'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      ElevatedButton(
-                        onPressed: _nextPage,
-                        child: Text('Next', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
-                      ),
+                      readMode ? Container(
+                        decoration: BoxDecoration(
+                          color: _isDarkMode ? AppColors.buttonPrimary : Color(0xFF494848), // Button background color
+                          borderRadius: BorderRadius.circular(20), // Circular shape
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _previousPage,
+                          child: Text('Previous', style: TextStyle(fontSize: 16, color: _isDarkMode ? AppColors.buttonPrimary : Color(0xFF494848),)),
+                        ),
+                      )
+                          :
+                      Container(),
+                      readMode ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2.0),
+                        child: Text(
+                          'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
+                          style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 14),
+                        ),
+                      )
+                          :
+                      Container(),
+                      readMode ? Container(
+                        decoration: BoxDecoration(
+                          color: _isDarkMode ? AppColors.buttonPrimary : Color(0xFF494848),
+                          borderRadius: BorderRadius.circular(20), // Circular shape
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _nextPage,
+                          child: Text('Next', style: TextStyle(fontSize: 16, color: _isDarkMode ? AppColors.buttonPrimary : Color(0xFF494848),)),
+                        ),
+                      )
+                          :
+                      Container(),
                     ],
                   ),
                 ),
+                !readMode ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+                  child: Slider(
+                    activeColor: AppColors.buttonPrimary,
+                    value: _currentPageIndex.toDouble(),
+                    min: 0,
+                    max: (_words.length / _wordsPerPage).ceil() - 1.0,
+                    onChanged: (double newValue) {
+                      setState(() {
+                        _currentPageIndex = newValue.toInt();
+                        _loadCurrentPage();
+                        _updateProgress();
+                      });
+                    },
+                  ),
+                )
+                    :
+                Container(),
               ],
-                        ),
-                      ),
             ),
+          ),
+        ),
       ),
     );
   }
