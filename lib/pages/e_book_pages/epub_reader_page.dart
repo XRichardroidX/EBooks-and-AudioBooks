@@ -227,49 +227,65 @@ class _BookReaderState extends State<BookReader> {
                         color: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
                         padding: _fontSize >= 19 ? EdgeInsets.symmetric(horizontal: 15.0, vertical: 0) : (readMode ? EdgeInsets.fromLTRB(20, 0, 20, 0) : EdgeInsets.fromLTRB(20, 0, 20, 0)),
                         child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    child: SelectableText(
-                      _extractedText,
-                      key: _contentKey,
-                      style: TextStyle(
-                        fontSize: _fontSize,
-                        wordSpacing: 2,
-                        color: _isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF494848),
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2.0),
-                  child: Text(
-                    'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
-                    style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _previousPage,
-                        child: Text('Previous', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
-                      ),
-                      Text(
-                        'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      ElevatedButton(
-                        onPressed: _nextPage,
-                        child: Text('Next', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                          children: [
+                            Expanded(
+                              child: SingleChildScrollView(
+                                controller: _scrollController,
+                                child: SelectableText(
+                                  _extractedText,
+                                  key: _contentKey,
+                                  style: TextStyle(
+                                    fontSize: _fontSize,
+                                    wordSpacing: 2,
+                                    color: _isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF494848),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Text(
+                                'Progress: ${((_currentPageIndex/(_words.length / _wordsPerPage)) * 100).toStringAsFixed(1)}%',
+                                style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black, fontSize: 16),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: _previousPage,
+                                    child: Text('Previous', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
+                                  ),
+                                  Text(
+                                    'Page ${_currentPageIndex + 1} / ${(_words.length / _wordsPerPage).ceil()}',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: _nextPage,
+                                    child: Text('Next', style: TextStyle(fontSize: 16, color: AppColors.textHighlight)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+                              child: Slider(
+                                value: _currentPageIndex.toDouble(),
+                                min: 0,
+                                max: (_words.length / _wordsPerPage).ceil() - 1.0,
+                                activeColor: Colors.red, // Red color for the slider
+                                onChanged: (double newValue) {
+                                  setState(() {
+                                    _currentPageIndex = newValue.toInt();
+                                    _loadCurrentPage();
+                                    _updateProgress();
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ),
             ),
