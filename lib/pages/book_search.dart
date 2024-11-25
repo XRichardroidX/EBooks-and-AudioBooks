@@ -93,7 +93,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
         databaseId: Constants.databaseId,
         collectionId: Constants.ebooksCollectionId,
         queries: [
-          Query.limit(200), // Adjust the limit as needed
+          Query.limit(10), // Adjust the limit as needed
           // Add more queries if necessary
         ],
       );

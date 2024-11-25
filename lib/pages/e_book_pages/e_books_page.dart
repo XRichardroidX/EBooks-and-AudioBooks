@@ -125,13 +125,12 @@ class _EBooksPageState extends State<EBooksPage> {
             'bookId': doc.$id // Unique identifier for the book
           };
 
-          String bookBody = doc.data['bookBody'] ?? '';
-          saveBookBodyToPreferences(bookData['bookId'], bookBody); // Save bookBody separately
+
 
           for (var category in bookCategories) {
             category = category.trim();
             if (categorizedBooks.containsKey(category)) {
-              if (categorizedBooks[category]!.length < 30) {
+              if (categorizedBooks[category]!.length < 20) {
                 categorizedBooks[category]!.add(bookData);
               }
             }
@@ -158,12 +157,6 @@ class _EBooksPageState extends State<EBooksPage> {
         }
       });
     }
-  }
-
-
-  Future<void> saveBookBodyToPreferences(String bookId, String bookBody) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('bookBody+$bookId', bookBody);
   }
 
 
@@ -279,278 +272,278 @@ class _EBooksPageState extends State<EBooksPage> {
     double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundSecondary,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundPrimary,
-        title: const Text(
-          'E-Books',
-          style: TextStyle(color: AppColors.textHighlight),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  // Fetch version from Appwrite
-                  String latestVersion = await _fetchAppVersionFromAppwrite();
+        backgroundColor: AppColors.backgroundSecondary,
+        appBar: AppBar(
+          backgroundColor: AppColors.backgroundPrimary,
+          title: const Text(
+            'E-Books',
+            style: TextStyle(color: AppColors.textHighlight),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    // Fetch version from Appwrite
+                    String latestVersion = await _fetchAppVersionFromAppwrite();
 
-                  // Check if the app version matches 'v1'
-                  if (latestVersion == 'yes') {
-                    // If version matches, navigate to UploadEBooksPage
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const UploadEBooksPage(),
+                    // Check if the app version matches 'v1'
+                    if (latestVersion == 'yes') {
+                      // If version matches, navigate to UploadEBooksPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UploadEBooksPage(),
+                        ),
+                      );
+                    } else {
+                      // If version doesn't match, navigate to SorryUploadBlockedPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SorryUploadBlockedPage(),
+                        ),
+                      );
+                    }
+                  },
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    );
-                  } else {
-                    // If version doesn't match, navigate to SorryUploadBlockedPage
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SorryUploadBlockedPage(),
-                      ),
-                    );
-                  }
-                },
-                style: ButtonStyle(
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    side: MaterialStateProperty.all(
+                      BorderSide(color: AppColors.buttonPrimary, width: 2),
                     ),
                   ),
-                  side: MaterialStateProperty.all(
-                    BorderSide(color: AppColors.buttonPrimary, width: 2),
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.add,
-                  size: 28,
-                  color: AppColors.textPrimary,
-                ),
-                label: const Text(
-                  'Upload E-Books',
-                  style: TextStyle(
-                    fontSize: 18,
+                  icon: const Icon(
+                    Icons.add,
+                    size: 28,
                     color: AppColors.textPrimary,
                   ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-
-        body: categorizedBooks.values.any((list) => list.isNotEmpty) ? RefreshIndicator(
-        onRefresh: () async {
-          await fetchBooks();
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              // Recent Books Section
-              if (recentBooks.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Continue Reading',
+                  label: const Text(
+                    'Upload E-Books',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                       color: AppColors.textPrimary,
                     ),
                   ),
                 ),
-              // Recent Books Horizontal List
-              if (recentBooks.isNotEmpty)
-                SizedBox(
-                  height: 300, // Adjust the height of the horizontal list
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal, // Horizontal scrolling
-                    itemCount:
-                    recentBooks.length > 10 ? 10 : recentBooks.length, // Limit to a maximum of 10 books
-                    itemBuilder: (context, index) {
-                      final book = recentBooks[index];
-                      return GestureDetector(
-                        onTap: () => navigateToBookDetails(book),
-                        child: Container(
-                          width: 160, // Width of each book item
-                          margin: const EdgeInsets.only(right: 8.0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: AppColors.cardBackground,
-                            border: Border.all(color: AppColors.textPrimary),
-                          ),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: CachedNetworkImage(
-                                  imageUrl: book.bookCover,
-                                  imageBuilder: (context, imageProvider) => Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      image: DecorationImage(
-                                        image: imageProvider,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                  placeholder: (context, url) =>
-                                  const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
-                                  errorWidget: (context, url, error) =>
-                                  const Icon(Icons.error),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      truncateText(book.bookTitle),
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        color: AppColors.textPrimary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      truncateText(book.bookAuthor),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                          color: AppColors.textSecondary),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              // Display each category of books
-              ...categorizedBooks.entries.map((entry) {
-                String category = entry.key;
-                List<Map<String, dynamic>> books = entry.value;
-
-                if (books.isEmpty) return const SizedBox.shrink();
-
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 210, // Adjust the height of the horizontal list
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal, // Horizontal scrolling
-                          itemCount: books.length,
-                          itemBuilder: (context, index) {
-                            var book = books[index];
-                            return GestureDetector(
-                              onTap: () async {
-                                // Check if the user is authenticated
-                                final user = FirebaseAuth.instance.currentUser;
-
-                                if (user == null) {
-                                  // If not logged in, navigate to the login page
-                                  context.push('/login');
-                                } else {
-                                  // If logged in, navigate to the book details page
-                                  navigateToBookDetails(Book(
-                                    bookTitle: book['bookTitle'],
-                                    bookAuthor: book['authorNames'],
-                                    bookCover: book['bookCoverUrl'],
-                                    bookSummary: book['bookSummary'],
-                                    bookId: book['bookId'],
-                                  ));
-                                }
-                              },
-                              child: Container(
-                                width: 120, // Width of each book item
-                                margin: const EdgeInsets.only(right: 8.0),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: AppColors.cardBackground,
-                                  border: Border.all(color: AppColors.textPrimary),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                      child: CachedNetworkImage(
-                                        imageUrl: book['bookCoverUrl'],
-                                        imageBuilder: (context, imageProvider) => Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(10),
-                                            image: DecorationImage(
-                                              image: imageProvider,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        ),
-                                        placeholder: (context, url) =>
-                                        const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
-                                        errorWidget: (context, url, error) =>
-                                        const Icon(Icons.error),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            truncateText(book['bookTitle']),
-                                            style: const TextStyle(
-                                              color: AppColors.textPrimary,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            truncateText(book['authorNames']),
-                                            style: const TextStyle(color: AppColors.textSecondary),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
-      )
-          :
-          Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,))
+
+        body: categorizedBooks.values.any((list) => list.isNotEmpty) ? RefreshIndicator(
+          onRefresh: () async {
+            await fetchBooks();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                // Recent Books Section
+                if (recentBooks.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Continue Reading',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                // Recent Books Horizontal List
+                if (recentBooks.isNotEmpty)
+                  SizedBox(
+                    height: 300, // Adjust the height of the horizontal list
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal, // Horizontal scrolling
+                      itemCount:
+                      recentBooks.length > 10 ? 10 : recentBooks.length, // Limit to a maximum of 10 books
+                      itemBuilder: (context, index) {
+                        final book = recentBooks[index];
+                        return GestureDetector(
+                          onTap: () => navigateToBookDetails(book),
+                          child: Container(
+                            width: 160, // Width of each book item
+                            margin: const EdgeInsets.only(right: 8.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: AppColors.cardBackground,
+                              border: Border.all(color: AppColors.textPrimary),
+                            ),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: CachedNetworkImage(
+                                    imageUrl: book.bookCover,
+                                    imageBuilder: (context, imageProvider) => Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        image: DecorationImage(
+                                          image: imageProvider,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    placeholder: (context, url) =>
+                                    const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
+                                    errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        truncateText(book.bookTitle),
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        truncateText(book.bookAuthor),
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: AppColors.textSecondary),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                // Display each category of books
+                ...categorizedBooks.entries.map((entry) {
+                  String category = entry.key;
+                  List<Map<String, dynamic>> books = entry.value;
+
+                  if (books.isEmpty) return const SizedBox.shrink();
+
+                  return Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 210, // Adjust the height of the horizontal list
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal, // Horizontal scrolling
+                            itemCount: books.length,
+                            itemBuilder: (context, index) {
+                              var book = books[index];
+                              return GestureDetector(
+                                onTap: () async {
+                                  // Check if the user is authenticated
+                                  final user = FirebaseAuth.instance.currentUser;
+
+                                  if (user == null) {
+                                    // If not logged in, navigate to the login page
+                                    context.push('/login');
+                                  } else {
+                                    // If logged in, navigate to the book details page
+                                    navigateToBookDetails(Book(
+                                      bookTitle: book['bookTitle'],
+                                      bookAuthor: book['authorNames'],
+                                      bookCover: book['bookCoverUrl'],
+                                      bookSummary: book['bookSummary'],
+                                      bookId: book['bookId'],
+                                    ));
+                                  }
+                                },
+                                child: Container(
+                                  width: 120, // Width of each book item
+                                  margin: const EdgeInsets.only(right: 8.0),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: AppColors.cardBackground,
+                                    border: Border.all(color: AppColors.textPrimary),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: CachedNetworkImage(
+                                          imageUrl: book['bookCoverUrl'],
+                                          imageBuilder: (context, imageProvider) => Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              image: DecorationImage(
+                                                image: imageProvider,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ),
+                                          placeholder: (context, url) =>
+                                          const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
+                                          errorWidget: (context, url, error) =>
+                                          const Icon(Icons.error),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          children: [
+                                            Text(
+                                              truncateText(book['bookTitle']),
+                                              style: const TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              truncateText(book['authorNames']),
+                                              style: const TextStyle(color: AppColors.textSecondary),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        )
+            :
+        Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,))
     );
   }
 }

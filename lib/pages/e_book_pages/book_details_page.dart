@@ -1,10 +1,12 @@
 import 'dart:ui';
+import 'package:appwrite/appwrite.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../constants/app_write_constants.dart';
 import '../../widget/book.dart';
 import '../../widget/cached_images.dart'; // Assuming this contains your custom cache manager
 import '../book_list_page.dart';
@@ -35,9 +37,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   bool isExpanded = false;
   bool isBookInList = false; // To track if the book is already in the list
   String userId = '';
-  String? bookBody;
-
-
+  String? ebookBody;
+  final Client client = Client();
+  late Databases databases;
+  bool loading = true;
 
 
   List<Book> recentBooks = [];
@@ -56,11 +59,52 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
 
-  Future<String?> loadBookBodyFromPreferences(String bookId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bookBody = prefs.getString('bookBody+$bookId');
-    return prefs.getString('bookBody+$bookId');
+  // Future<String?> loadBookBodyFromPreferences(String bookId) async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   bookBody = prefs.getString('bookBody+$bookId');
+  //   return prefs.getString('bookBody+$bookId');
+  // }
+
+
+  Future<String?> getBookBody(String documentId) async {
+    try {
+      // Initialize the Appwrite client
+      final client = Client()
+          .setEndpoint(Constants.endpoint) // Replace with your Appwrite endpoint
+          .setProject(Constants.projectId);
+      // Initialize the Appwrite Databases instance
+      final databases = Databases(client);
+
+      // Replace with your database ID and collection ID
+      const databaseId = Constants.databaseId;     // Replace with your database ID
+      const collectionId = Constants.ebooksCollectionId; // Replace with your collection ID
+
+      // Fetch the document
+      final document = await databases.getDocument(
+        databaseId: databaseId,
+        collectionId: collectionId,
+        documentId: documentId,
+      );
+
+
+      ebookBody = document.data['bookBody'] as String?;
+      // Return the 'bookBody' attribute
+      if(ebookBody.toString().isNotEmpty){
+        setState(() {
+          loading = false;
+        });
+      }
+      return document.data['bookBody'] as String?;
+    } catch (e) {
+      // Handle errors, e.g., document not found or network issues
+      print('Error fetching document: $e');
+      showCustomSnackbar(context, '$e', '$e', Colors.red);
+      return null;
+    }
   }
+
+
+
 
 
   // Navigate to BookDetailsPage
@@ -98,8 +142,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   void initState() {
     super.initState();
     userId = FirebaseAuth.instance.currentUser!.uid;
-    loadBookBodyFromPreferences(widget.bookId);
     loadBooks();
+    getBookBody(widget.bookId);
+    databases = Databases(client);
     checkIfBookInList();
   }
 
@@ -272,7 +317,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         color: AppColors.backgroundSecondary,
         width: MediaQuery.of(context).size.width,
         height: double.infinity,
-        child: SingleChildScrollView(
+        child: loading ?
+        Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
+            :
+        SingleChildScrollView(
           child: Column(
             children: [
               if (widget.bookCover.isNotEmpty)
@@ -362,7 +410,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           );
                         } else {
                           // Subscription is active, open the book reader
-                          await addToRecentReads();
 
                           // Navigate to the BookReader and wait for it to complete
                           Navigator.push(
@@ -371,10 +418,12 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               builder: (context) => BookReader(
                                 bookTitle: widget.bookTitle,
                                 bookAuthor: widget.bookAuthor,
-                                bookBody: bookBody ?? 'No Book Content Found'!,
+                                bookBody: ebookBody ?? 'No Book Content Found'!,
                               ),
                             ),
                           );
+                          await addToRecentReads();
+
                         }
                       } else {
                         // Handle case where endSub is not found in SharedPreferences (e.g., prompt subscription)
@@ -390,7 +439,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       print(error);
                     }
                   },
-                  child: Container(
+                  child: loading ?
+                  CircularProgressIndicator(color: AppColors.iconColor,)
+                  :
+                  Container(
                   width: MediaQuery.of(context).size.width * 0.3,
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
