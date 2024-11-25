@@ -201,6 +201,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
   }
 
+
+
   // Optional: Remove the book from the list
   Future<void> removeFromBookList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
