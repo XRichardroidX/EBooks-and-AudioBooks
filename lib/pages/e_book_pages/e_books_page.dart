@@ -84,7 +84,7 @@ class _EBooksPageState extends State<EBooksPage> {
     });
 
     try {
-      int limit = 30;
+      int limit = 1000;
       int offset = 0;
       List<Document> allDocuments = [];
 
@@ -130,7 +130,7 @@ class _EBooksPageState extends State<EBooksPage> {
           for (var category in bookCategories) {
             category = category.trim();
             if (categorizedBooks.containsKey(category)) {
-              if (categorizedBooks[category]!.length < 20) {
+              if (categorizedBooks[category]!.length < 100) {
                 categorizedBooks[category]!.add(bookData);
               }
             }
