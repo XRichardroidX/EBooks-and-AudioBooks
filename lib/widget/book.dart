@@ -6,14 +6,12 @@ class Book {
   final String bookTitle;
   final String bookAuthor;
   final String bookCover;
-  final String bookSummary;
   final String bookId;
 
   Book({
     required this.bookTitle,
     required this.bookAuthor,
     required this.bookCover,
-    required this.bookSummary,
     required this.bookId,
   });
 
@@ -23,7 +21,6 @@ class Book {
       'bookTitle': bookTitle,
       'bookAuthor': bookAuthor,
       'bookCover': bookCover,
-      'bookSummary': bookSummary,
       'bookId': bookId,
     };
   }
@@ -34,7 +31,6 @@ class Book {
       bookTitle: map['bookTitle'] ?? '',
       bookAuthor: map['bookAuthor'] ?? '',
       bookCover: map['bookCover'] ?? '',
-      bookSummary: map['bookSummary'] ?? '',
       bookId: map['bookId'] ?? 'No Id',
     );
   }

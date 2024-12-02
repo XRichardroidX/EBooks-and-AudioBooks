@@ -45,7 +45,6 @@ final GoRouter router = GoRouter(
           bookTitle: bookTitle,
           bookAuthor: bookAuthor,
           bookCover: bookCover,
-          bookSummary: bookSummary,
           bookId: bookId,
         );
       },

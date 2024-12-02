@@ -79,7 +79,6 @@ class _BookListPageState extends State<BookListPage> {
             bookTitle: book.bookTitle,
             bookAuthor: book.bookAuthor,
             bookCover: book.bookCover,
-            bookSummary: book.bookSummary,
             bookId: book.bookId,
           ),
         ),

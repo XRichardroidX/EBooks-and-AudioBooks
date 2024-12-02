@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:appwrite/appwrite.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -18,14 +19,12 @@ class BookDetailsPage extends StatefulWidget {
   final String bookTitle;
   final String bookAuthor;
   final String bookCover;
-  final String bookSummary;
   final String bookId;
 
   const BookDetailsPage({
     required this.bookTitle,
     required this.bookAuthor,
     required this.bookCover,
-    required this.bookSummary,
     required this.bookId,
     Key? key,
   }) : super(key: key);
@@ -39,6 +38,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   bool isBookInList = false; // To track if the book is already in the list
   String userId = '';
   String? ebookBody;
+  String? bookSummary;
   String? bookCategories;
   final Client client = Client();
   late Databases databases;
@@ -61,15 +61,26 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
 
-  // Future<String?> loadBookBodyFromPreferences(String bookId) async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   bookBody = prefs.getString('bookBody+$bookId');
-  //   return prefs.getString('bookBody+$bookId');
-  // }
+  Future<String?> loadBookBodyFromPreferences(String bookId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bookCategories = prefs.getString('$userId+bookCategories+${widget.bookId}');
+    bookSummary = prefs.getString('$userId+bookSummary+${widget.bookId}');
+    return prefs.getString('$userId+bookBody+${widget.bookId}');
+  }
 
 
   Future<String?> getBookBody(String documentId) async {
     try {
+
+      String? savedBookBody = await loadBookBodyFromPreferences(documentId);
+      if (savedBookBody != null) {
+        setState(() {
+          ebookBody = savedBookBody;
+          loading = false;
+        });
+        return savedBookBody;
+      }
+
       // Initialize the Appwrite client
       final client = Client()
           .setEndpoint(Constants.endpoint) // Replace with your Appwrite endpoint
@@ -90,7 +101,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
 
       bookCategories = document.data['bookCategories'].join(" | ");
-
+      bookSummary = document.data['bookSummary'] as String?;
       ebookBody = document.data['bookBody'] as String?;
       // Return the 'bookBody' attribute
       if(ebookBody.toString().isNotEmpty){
@@ -102,7 +113,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     } catch (e) {
       // Handle errors, e.g., document not found or network issues
       print('Error fetching document: $e');
-      showCustomSnackbar(context, '$e', '$e', Colors.red);
+      showCustomSnackbar(context, 'Poor Connection', 'Unable to fetch book', AppColors.error);
+      context.pop();
       return null;
     }
   }
@@ -120,7 +132,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           bookTitle: book.bookTitle,
           bookAuthor: book.bookAuthor,
           bookCover: book.bookCover,
-          bookSummary: book.bookSummary,
           bookId: book.bookId,
         ),
       ),
@@ -172,36 +183,48 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     });
   }
 
+
+
   // Add the current book to the booklist
-  Future<void> addToBookList() async {
+  Future<void> addToBookList(String bookBody, String summary, String categories) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> bookList = prefs.getStringList('$userId+bookList') ?? [];
 
-    // Create a Book instance
+    // Create a Book instance with additional attributes
     Book newBook = Book(
       bookTitle: widget.bookTitle,
       bookAuthor: widget.bookAuthor,
       bookCover: widget.bookCover,
-      bookSummary: widget.bookSummary,
       bookId: widget.bookId,
     );
 
-    // Check for duplicates
+    // Check if the book already exists in the list
     bool exists = bookList.any((bookJson) {
       Book book = Book.fromJson(bookJson);
       return book.bookTitle == newBook.bookTitle &&
           book.bookAuthor == newBook.bookAuthor;
     });
 
+    // If not a duplicate and under limit, add the book
     if (!exists) {
-      bookList.add(newBook.toJson());
-      await prefs.setStringList('$userId+bookList', bookList);
-      setState(() {
-        isBookInList = true;
-      });
-      showCustomSnackbar(context, 'Read List', 'Book added to your list', AppColors.success);
+      if (bookList.length < 10) {
+        bookList.add(newBook.toJson());  // Convert Map to String
+        await prefs.setStringList('$userId+bookList', bookList);
+        await prefs.setString('$userId+bookCategories+${widget.bookId}', categories);
+        await prefs.setString('$userId+bookSummary+${widget.bookId}', summary);
+        await prefs.setString('$userId+bookBody+${widget.bookId}', ebookBody!);
+        setState(() {
+          isBookInList = true;
+        });
+        showCustomSnackbar(
+            context, 'Read List', 'Book added to your list', AppColors.success);
+      } else {
+        showCustomSnackbar(
+            context, 'Read List', 'You have reached the limit of 10 books', AppColors.error);
+      }
     } else {
-      showCustomSnackbar(context, 'Read List', 'Book is already in your list', AppColors.info);
+      showCustomSnackbar(
+          context, 'Read List', 'Book is already in your list', AppColors.info);
     }
   }
 
@@ -235,7 +258,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       bookTitle: widget.bookTitle,
       bookAuthor: widget.bookAuthor,
       bookCover: widget.bookCover,
-      bookSummary: widget.bookSummary,
       bookId: widget.bookId,
     );
 
@@ -259,11 +281,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Split the bookSummary into words
-    final words = widget.bookSummary.split(' ');
-
-    // Check if the summary exceeds 80 words
-    final hasMoreThan80Words = words.length > 80;
 
     return Scaffold(
       appBar: AppBar(
@@ -279,14 +296,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 removeFromBookList();
               } else {
                 // Else, add it
-                addToBookList();
+                addToBookList(ebookBody!, bookSummary!, bookCategories!);
               }
             },
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Icon(
-                isBookInList ? Icons.check : Icons.arrow_downward,
-                color: isBookInList ? Colors.green : Colors.white,
+                isBookInList ? Icons.restore_from_trash_outlined : Icons.arrow_downward,
+                color: isBookInList ? Colors.white : Colors.white,
               ),
             ),
           ),
@@ -317,7 +334,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         color: AppColors.backgroundSecondary,
         width: MediaQuery.of(context).size.width,
         height: double.infinity,
-        child: loading ?
+        child: (loading || ebookBody == null || bookSummary== null || bookCategories == null) ?
         Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
             :
         SingleChildScrollView(
@@ -389,26 +406,32 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 ),
               ),
               Divider(color: AppColors.dividerColor),
-              Padding(
-                padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                child: Text(
-                  '${widget.bookTitle}',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    padding: const EdgeInsets.only(left: 10.0, right: 5.0),
+                    child: Text(
+                      '${widget.bookTitle}',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                child: Text(
-                  'by: ${widget.bookAuthor}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppColors.textSecondary,
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10.0, right: 5.0),
+                    child: Text(
+                      'by: ${widget.bookAuthor}',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 10),
               InkWell(
@@ -507,38 +530,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: Column(
-                  children: [
-                    Text(
-                      isExpanded || !hasMoreThan80Words
-                          ? widget.bookSummary
-                          : words.take(80).join(' ') + '...',
+                child: Text(bookSummary!,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         color: AppColors.textSecondary,
                       ),
-                    ),
-                    if (hasMoreThan80Words) ...[
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isExpanded = !isExpanded;
-                          });
-                        },
-                        child: Text(
-                          isExpanded ? 'See Less' : 'See More',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
               ),
               // Recent Books Section
               if (recentBooks.isNotEmpty)

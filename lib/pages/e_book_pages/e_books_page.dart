@@ -75,6 +75,9 @@ class _EBooksPageState extends State<EBooksPage> {
     }
   }
 
+
+
+
   Future<void> fetchBooks() async {
     bool hasCache = categorizedBooks.values.any((list) => list.isNotEmpty);
 
@@ -87,11 +90,12 @@ class _EBooksPageState extends State<EBooksPage> {
     });
 
     try {
-      int limit = 1000;
+      int limit = 5; // Fetch 5 documents at a time
       int offset = 0;
       List<Document> allDocuments = [];
+      bool hasMore = true;
 
-      while (true) {
+      while (hasMore) {
         final response = await databases.listDocuments(
           databaseId: Constants.databaseId,
           collectionId: Constants.ebooksCollectionId,
@@ -101,48 +105,50 @@ class _EBooksPageState extends State<EBooksPage> {
         allDocuments.addAll(response.documents);
 
         if (response.documents.length < limit) {
-          break;
+          hasMore = false; // No more documents to fetch
+        } else {
+          offset += limit; // Increment offset for the next batch
         }
 
-        offset += limit;
+        if (!mounted) return;
+
+        // Process each batch incrementally
+        setState(() {
+          for (var doc in response.documents) {
+            var bookCategories = doc.data['bookCategories'] ?? [];
+            if (bookCategories is String) {
+              bookCategories = [bookCategories];
+            }
+
+            var bookData = {
+              'authorNames': doc.data['authorNames'] ?? 'Unknown Author',
+              'bookTitle': doc.data['bookTitle'] ?? 'Untitled',
+              'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
+              'bookId': doc.$id, // Unique identifier for the book
+            };
+
+            for (var category in bookCategories) {
+              category = category.trim();
+              if (categorizedBooks.containsKey(category)) {
+                // Check if the book is already in the category
+                if (!categorizedBooks[category]!
+                    .any((book) => book['bookId'] == bookData['bookId'])) {
+                  categorizedBooks[category]!.add(bookData);
+                }
+              }
+            }
+          }
+        });
+
+        // Save each batch to preferences
+        await saveBooksToPreferences();
       }
 
       if (!mounted) return;
 
       setState(() {
-        // Clear existing books to avoid duplicates
-        categorizedBooks.forEach((key, value) => value.clear());
-
-        // Process documents and add to categories
-        for (var doc in allDocuments) {
-          var bookCategories = doc.data['bookCategories'] ?? [];
-          if (bookCategories is String) {
-            bookCategories = [bookCategories];
-          }
-
-          var bookData = {
-            'authorNames': doc.data['authorNames'] ?? 'Unknown Author',
-            'bookTitle': doc.data['bookTitle'] ?? 'Untitled',
-            'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
-            'bookSummary': doc.data['bookSummary'] ?? 'No summary available',
-            'bookId': doc.$id // Unique identifier for the book
-          };
-
-
-
-          for (var category in bookCategories) {
-            category = category.trim();
-            if (categorizedBooks.containsKey(category)) {
-              if (categorizedBooks[category]!.length < 100) {
-                categorizedBooks[category]!.add(bookData);
-              }
-            }
-          }
-        }
-
         filteredBooks = categorizedBooks.values.expand((x) => x).toList();
         shuffleBooks();
-        saveBooksToPreferences();
 
         if (hasCache) {
           isFetching = false;
@@ -161,6 +167,8 @@ class _EBooksPageState extends State<EBooksPage> {
       });
     }
   }
+
+
 
 
   void shuffleBooks() {
@@ -243,7 +251,6 @@ class _EBooksPageState extends State<EBooksPage> {
             bookTitle: book.bookTitle,
             bookAuthor: book.bookAuthor,
             bookCover: book.bookCover,
-            bookSummary: book.bookSummary,
             bookId: book.bookId,
           ),
         ),
@@ -475,7 +482,6 @@ class _EBooksPageState extends State<EBooksPage> {
                                       bookTitle: book['bookTitle'],
                                       bookAuthor: book['authorNames'],
                                       bookCover: book['bookCoverUrl'],
-                                      bookSummary: book['bookSummary'],
                                       bookId: book['bookId'],
                                     ));
                                   }

@@ -32,20 +32,34 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
   // Timer for periodic updates
   Timer? _updateTimer;
 
+
+
+// Initialize state variables
+  int offset = 0;
+  bool hasMoreBooks = true;
+  bool isFetchingMore = false;
+
+
   @override
   void initState() {
     super.initState();
     userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     initializeAppwrite();
-    loadBooksFromPreferences().then((_) {
-      shuffleBooks();
-      fetchBooks(); // Initial fetch
+
+    // Load books from SharedPreferences first
+    loadBooksFromPreferences().then((bool loadedFromCache) {
+      if (!loadedFromCache) {
+        // If cache is empty, fetch books from the database
+        fetchBooks();
+      }
     });
-    // Start periodic updates after initial load
-    _updateTimer = Timer.periodic(const Duration(hours: 1), (timer) {
-      fetchBooks();
+
+    // Periodically fetch updates after initial loading
+    _updateTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
+      fetchBooks(isLoadMore: true);
     });
   }
+
 
   @override
   void dispose() {
@@ -64,7 +78,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
     print('Appwrite Client Initialized');
   }
 
-  Future<void> loadBooksFromPreferences() async {
+  Future<bool> loadBooksFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? jsonBooks = prefs.getString('originalBooks');
 
@@ -74,81 +88,93 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
         originalBooks = List<Map<String, dynamic>>.from(decoded);
         filteredBooks = List.from(originalBooks);
         shuffleBooks();
-        isInitialLoading = false; // Set loading state to false
+        isInitialLoading = false;
       });
       print('Loaded ${originalBooks.length} books from SharedPreferences');
-    } else {
-      setState(() {
-        isInitialLoading = false; // No cached books
-      });
-      print('No books found in SharedPreferences');
+      return true; // Data was loaded from cache
     }
+
+    setState(() {
+      isInitialLoading = false; // No cached books
+    });
+    print('No books found in SharedPreferences');
+    return false; // No data in cache
   }
 
-  Future<void> fetchBooks() async {
+
+
+  Future<void> fetchBooks({bool isLoadMore = false}) async {
+    if (isLoadMore && !hasMoreBooks) {
+      print('No more books to load.');
+      return;
+    }
+
+    if (isFetchingMore) {
+      print('Already fetching books.');
+      return;
+    }
+
     try {
-      print('Fetching books from database...');
-      // Fetch documents from the Appwrite database
+      setState(() {
+        if (isLoadMore) {
+          isFetchingMore = true;
+        } else {
+          isInitialLoading = true;
+        }
+      });
+
+      print('Fetching books with offset $offset...');
+
+      // Fetch a batch of 5 books
       final result = await databases.listDocuments(
         databaseId: Constants.databaseId,
         collectionId: Constants.ebooksCollectionId,
         queries: [
-          Query.limit(1000), // Adjust the limit as needed
-          // Add more queries if necessary
+          Query.limit(5),
+          Query.offset(offset),
         ],
       );
 
-      List<Map<String, dynamic>> booksFromDatabase = result.documents.map((doc) {
+      List<Map<String, dynamic>> fetchedBooks = result.documents.map((doc) {
         return {
           'bookTitle': doc.data['bookTitle'] ?? '',
           'authorNames': doc.data['authorNames'] ?? '',
           'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
           'bookId': doc.$id,
-          'bookSummary': doc.data['bookSummary'] ?? '',
-          'bookCategories': doc.data['bookCategories'] ?? '',
+          'bookCategories': doc.data['bookCategories'] ?? [],
         };
       }).toList();
 
-      print('Fetched ${booksFromDatabase.length} books from database');
-
-      // Compare with existing books to see if there are changes
-      bool isDataDifferent = false;
-
-      if (booksFromDatabase.length != originalBooks.length) {
-        isDataDifferent = true;
-        print('Book count changed: ${originalBooks.length} -> ${booksFromDatabase.length}');
-      } else {
-        for (int i = 0; i < booksFromDatabase.length; i++) {
-          if (booksFromDatabase[i] != originalBooks[i]) {
-            isDataDifferent = true;
-            print('Book data changed at index $i');
-            break;
+      setState(() {
+        // Ensure no duplicate books are added
+        for (var book in fetchedBooks) {
+          if (!originalBooks.any((existingBook) => existingBook['bookId'] == book['bookId'])) {
+            originalBooks.add(book);
           }
         }
+        filteredBooks = applyFilter(searchQuery);
+        offset += fetchedBooks.length;
+        hasMoreBooks = fetchedBooks.isNotEmpty;
+      });
+
+      // Save books to SharedPreferences
+      if (fetchedBooks.isNotEmpty) {
+        await saveBooksToPreferences(originalBooks);
       }
 
-      if (isDataDifferent) {
-        print('New data detected, updating books');
-
-        // Shuffle the fetched books
-        booksFromDatabase.shuffle(Random());
-
-        // Save to SharedPreferences
-        await saveBooksToPreferences(booksFromDatabase);
-
-        // Update local state
-        setState(() {
-          originalBooks = booksFromDatabase;
-          filteredBooks = applyFilter(searchQuery);
-        });
-      } else {
-        print('No new data to update');
-      }
+      print('Fetched ${fetchedBooks.length} books, total: ${originalBooks.length}');
     } catch (e) {
-      // Handle any error that may occur
-      print("Error fetching books from database: $e");
+      print('Error fetching books: $e');
+    } finally {
+      setState(() {
+        isFetchingMore = false;
+        isInitialLoading = false;
+      });
     }
   }
+
+
+
 
   Future<void> saveBooksToPreferences(List<Map<String, dynamic>> books) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -206,7 +232,6 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                 bookTitle: book['bookTitle'],
                 bookAuthor: book['authorNames'],
                 bookCover: book['bookCoverUrl'],
-                bookSummary: book['bookSummary'],
                 bookId: book['bookId'],
               ),
         ),
