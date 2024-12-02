@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:appwrite/appwrite.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
@@ -38,6 +39,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   bool isBookInList = false; // To track if the book is already in the list
   String userId = '';
   String? ebookBody;
+  String? bookCategories;
   final Client client = Client();
   late Databases databases;
   bool loading = true;
@@ -86,6 +88,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         documentId: documentId,
       );
 
+
+      bookCategories = document.data['bookCategories'].join(" | ");
 
       ebookBody = document.data['bookBody'] as String?;
       // Return the 'bookBody' attribute
@@ -265,13 +269,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
-        title: Text(
-          widget.bookTitle,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios)),
         actions: [
           // Booklist Icon
           InkWell(
@@ -379,72 +377,97 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   ],
                 ),
               Divider(color: AppColors.dividerColor),
-              Text(
-                'by: ${widget.bookAuthor}',
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textSecondary,
+              const SizedBox(height: 5),
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                child: Text(
+                  '${bookCategories}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
               Divider(color: AppColors.dividerColor),
-              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                child: Text(
+                  '${widget.bookTitle}',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                child: Text(
+                  'by: ${widget.bookAuthor}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
               InkWell(
-                  onTap: () async {
-                    // Retrieve the subscription end timestamp from SharedPreferences
-                    SharedPreferences prefs = await SharedPreferences.getInstance();
-                    String? endSubString = prefs.getString('$userId+endSub');
+                onTap: () async {
+                  // Retrieve the subscription end timestamp from SharedPreferences
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  String? endSubString = prefs.getString('$userId+endSub');
 
-                    try {
+                  try {
 
-                      if (endSubString != null) {
-                        // Convert the endSub string back to a DateTime object
-                        DateTime endSubDate = DateTime.parse(endSubString);
-                        DateTime currentTime = DateTime.now();
+                    if (endSubString != null) {
+                      // Convert the endSub string back to a DateTime object
+                      DateTime endSubDate = DateTime.parse(endSubString);
+                      DateTime currentTime = DateTime.now();
 
-                        // Check if the current time exceeds the subscription end time
-                        if (currentTime.isAfter(endSubDate)) {
-                          // Subscription has expired, navigate to the subscription page
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SubscriptionPage(), // Navigate to your subscription page
-                            ),
-                          );
-                        } else {
-                          // Subscription is active, open the book reader
-
-                          // Navigate to the BookReader and wait for it to complete
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BookReader(
-                                bookTitle: widget.bookTitle,
-                                bookAuthor: widget.bookAuthor,
-                                bookBody: ebookBody ?? 'No Book Content Found'!,
-                              ),
-                            ),
-                          );
-                          await addToRecentReads();
-
-                        }
-                      } else {
-                        // Handle case where endSub is not found in SharedPreferences (e.g., prompt subscription)
+                      // Check if the current time exceeds the subscription end time
+                      if (currentTime.isAfter(endSubDate)) {
+                        // Subscription has expired, navigate to the subscription page
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => SubscriptionPage(), // Navigate to your subscription page
                           ),
                         );
+                      } else {
+                        // Subscription is active, open the book reader
+
+                        // Navigate to the BookReader and wait for it to complete
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookReader(
+                              bookTitle: widget.bookTitle,
+                              bookAuthor: widget.bookAuthor,
+                              bookBody: ebookBody ?? 'No Book Content Found'!,
+                            ),
+                          ),
+                        );
+                        await addToRecentReads();
+
                       }
-                    } catch (error) {
-                      showCustomSnackbar(context, '$error', '$error', Colors.black);
-                      print(error);
+                    } else {
+                      // Handle case where endSub is not found in SharedPreferences (e.g., prompt subscription)
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SubscriptionPage(), // Navigate to your subscription page
+                        ),
+                      );
                     }
-                  },
-                  child: loading ?
-                  CircularProgressIndicator(color: AppColors.iconColor,)
-                  :
-                  Container(
+                  } catch (error) {
+                    showCustomSnackbar(context, '$error', '$error', Colors.black);
+                    print(error);
+                  }
+                },
+                child: loading ?
+                CircularProgressIndicator(color: AppColors.iconColor,)
+                    :
+                Container(
                   width: MediaQuery.of(context).size.width * 0.3,
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -555,7 +578,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                 height: 120,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) =>
-                                Center(child: const CircularProgressIndicator(color: AppColors.buttonPrimary,)),
+                                    Center(child: const CircularProgressIndicator(color: AppColors.buttonPrimary,)),
                                 errorWidget: (context, url, error) => Container(
                                   width: 100,
                                   height: 120,

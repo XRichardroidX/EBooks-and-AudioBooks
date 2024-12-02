@@ -25,7 +25,7 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
   List<String> _selectedCategories = [];
   final List<String> _bookTypes = ['Novel', 'Spiritual', 'Self Development'];
   final List<String> _novel = [
-    "Mystery", "Romance", "Thriller", "Science Fiction", "Fantasy",
+    "Nigerian Stories", "Nigerian Romance", "African Tales", "Mystery", "Romance", "Thriller", "Science Fiction", "Fantasy",
     "Historical Fiction", "Adventure", "Horror", "Young Adult (YA)",
     "Masculinity", "Femininity", "Dystopian/Post-Apocalyptic",
     "Crime", "Comedy",
@@ -251,9 +251,9 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
                 _selectBookCover(context, true);
               },
               child: const Text(
-                  'Select Cover',
+                'Select Cover',
                 style: TextStyle(
-                  color: AppColors.textPrimary
+                    color: AppColors.textPrimary
                 ),
               ),
             ),
@@ -286,7 +286,7 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
               ),
               onPressed: _selectEpub,
               child: const Text(
-                  'Select EPUB',
+                'Select EPUB',
                 style: TextStyle(
                     color: AppColors.textPrimary
                 ),
@@ -313,7 +313,7 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
         ),
         onPressed: _uploadEBook,
         child: const Text(
-            'Upload E-Book',
+          'Upload E-Book',
           style: TextStyle(
               color: AppColors.textPrimary
           ),

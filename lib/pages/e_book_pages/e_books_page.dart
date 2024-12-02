@@ -27,6 +27,9 @@ class _EBooksPageState extends State<EBooksPage> {
   late Databases databases;
 
   Map<String, List<Map<String, dynamic>>> categorizedBooks = {
+    "Nigerian Stories": [],
+    "African Tales": [],
+    "Nigerian Romance": [],
     'Mystery': [],
     'Romance': [],
     'Thriller': [],

@@ -38,7 +38,7 @@ class SorryUploadBlockedPage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Beg Richard with a video call to unlock.',
+                'Wait until the problem is resolved or contact us through email from your profile page.',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppColors.textSecondary,
