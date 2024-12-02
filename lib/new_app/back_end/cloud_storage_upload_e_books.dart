@@ -53,24 +53,10 @@ Future<Map<String, dynamic>> uploadBookToCloudStorage({
       ],
     );
 
-    // Calculate the total file size
-    int totalFileSize = epubFile.size + imageBytes.lengthInBytes;
-
-    // Extract number of pages from the ePub file
-    EpubBook epubBook = await EpubReader.readBook(epubFile.bytes!);
-    int numberOfPages = epubBook.Chapters?.length ?? 0;
-
     // Generate URL for the uploaded book cover
     String imageUrl = '${Constants.endpoint}/storage/buckets/${Constants.cloudStorageBookCoverId}/files/${imageUploadResponse.$id}/view?project=${Constants.projectId}';
-
-    // Optionally pop the context
-    // Navigator.pop(context);
-    print('-----------------------------title-----------------------------');
-    // Return the required information as a map
     return {
       'bookCoverUrl': imageUrl,
-      'numberOfPages': '${numberOfPages}',
-      'totalFileSize': '${totalFileSize}',
     };
   } catch (e) {
     print('Error: $e');

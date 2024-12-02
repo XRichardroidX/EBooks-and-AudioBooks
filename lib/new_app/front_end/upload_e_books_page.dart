@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../back_end/database_upload_e_books.dart';
 import '../../style/colors.dart';
 import '../back_end/epub_to_text.dart';
+import '../back_end/pdf_to_text.dart';
 
 class UploadEBooksPage extends StatefulWidget {
   const UploadEBooksPage({super.key});
@@ -41,7 +42,7 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
   ];
 
   Uint8List? bookCover;
-  PlatformFile? epubBook;
+  PlatformFile? epubBook, selectedPdf;
 
   bool _isLoading = false;  // For showing the loading indicator
 
@@ -88,8 +89,47 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       _authorNameController.text = authors.join(',');
       _bookTableOfContentController.text = tableOfContents.toString();
       _bookBodyController.text = body;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Wait, hold on...')),
+      );
     }
   }
+
+
+
+  Future<void> _selectPdf() async {
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: true,
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        selectedPdf = result.files.single;
+      });
+
+      try {
+        Map<String, dynamic> pdfToText = await pdfTextFromFile(selectedPdf!);
+        String title = pdfToText['title'];
+        List authors = pdfToText['authors'];
+        List tableOfContents = pdfToText['tableOfContents'];
+        String body = pdfToText['body'];
+
+        _bookTitleController.text = title;
+        _authorNameController.text = authors.join(',');
+        _bookTableOfContentController.text = tableOfContents.toString();
+        _bookBodyController.text = body;
+      } catch (e) {
+        print('Error processing PDF file: $e');
+        // Optionally handle errors or show a message to the user
+      }
+    }
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +177,8 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
               _buildBookCoverSelection(context),
               const SizedBox(height: 16.0),
               _buildEpubSelection(),
+              const SizedBox(height: 16.0),
+              _buildPdfSelection(),
               const SizedBox(height: 16.0),
               _buildUploadButton(),
             ],
@@ -305,6 +347,40 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
     );
   }
 
+
+  Widget _buildPdfSelection() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('PDF File', style: TextStyle(color: AppColors.textPrimary)),
+            ElevatedButton(
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(AppColors.buttonPrimary),
+              ),
+              onPressed: _selectPdf,
+              child: const Text(
+                'Select PDF',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8.0),
+        if (selectedPdf != null)
+          Text(
+            selectedPdf!.name,
+            style: TextStyle(color: AppColors.textPrimary),
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
+    );
+  }
+
+
   Widget _buildUploadButton() {
     return Center(
       child: ElevatedButton(
@@ -343,25 +419,35 @@ class _UploadEBooksPageState extends State<UploadEBooksPage> {
       });
 
       // Call your upload function here (make sure this is asynchronous)
+      epubBook == null ? await uploadBookToDatabase(
+        context: context,
+        bookTitle: _bookTitleController.text,
+        authorName: _authorNameController.text,
+        bookSummary: _bookSummaryController.text,
+        bookCover: bookCover!,
+        body: _bookBodyController.text,
+        bookType: _selectedType!,
+        bookCategories: _selectedCategories,
+        tableOfContents: _bookTableOfContentController.text,
+        bookFile: selectedPdf!,
+      )
+      :
       await uploadBookToDatabase(
         context: context,
         bookTitle: _bookTitleController.text,
         authorName: _authorNameController.text,
         bookSummary: _bookSummaryController.text,
         bookCover: bookCover!,
-        bookFile: epubBook!,
+        body: _bookBodyController.text,
         bookType: _selectedType!,
         bookCategories: _selectedCategories,
+        tableOfContents: _bookTableOfContentController.text,
+        bookFile: epubBook!,
       );
 
       setState(() {
         _isLoading = false;
       });
-
-      // // After the upload, pop the screen
-      // if (mounted) {
-      //   Navigator.pop(context);
-      // }
     }
   }
 }

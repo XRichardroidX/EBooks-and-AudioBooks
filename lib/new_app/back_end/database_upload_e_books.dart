@@ -18,9 +18,11 @@ Future<bool> uploadBookToDatabase({
   required String authorName,
   required String bookSummary,
   required Uint8List bookCover,
-  required PlatformFile bookFile,
+  required String body,
   required String bookType,
   required List<String> bookCategories,
+  required String tableOfContents,
+  required PlatformFile bookFile,
 }) async {
   try {
     client
@@ -31,10 +33,7 @@ Future<bool> uploadBookToDatabase({
       SnackBar(content: Text('Wait, hold on...')),
     );
 
-    Map<String, dynamic> epubToText = await epubToTextFromFile(bookFile);
 
-    List tableOfContents = epubToText['tableOfContents'];
-    String body = epubToText['body'];
 
     print('-----------------------------tableOfContents: $tableOfContents--------------------------');
     print('-----------------------------body: $body--------------------------');
@@ -46,7 +45,6 @@ Future<bool> uploadBookToDatabase({
     );
 
     String bookCoverUrl = bookStorageUrl['bookCoverUrl'];
-    String totalFileSize = bookStorageUrl['totalFileSize'];
 
     // Make sure the user is authenticated before calling this function
     ScaffoldMessenger.of(context).showSnackBar(
@@ -66,9 +64,8 @@ Future<bool> uploadBookToDatabase({
           'bookBody': body, // Replace with your schema field name
           'bookCategories': bookCategories,
           'timeStamp': '${DateTime.now().millisecondsSinceEpoch}', // Replace with your schema field name
-          'totalFileSize': totalFileSize,
           'bookType': bookType,
-          'bookTableOfContent': tableOfContents
+          'bookTableOfContent': tableOfContents.split(''),
         },
         permissions: [
           Permission.read(Role.any()), // Allow any user to read the document
