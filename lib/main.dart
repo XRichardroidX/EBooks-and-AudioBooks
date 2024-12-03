@@ -1,22 +1,13 @@
-import 'dart:async'; // Required for StreamController
-import 'dart:io'; // Required for Platform
-import 'dart:ui';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth for authentication
 import 'package:firebase_core/firebase_core.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:novel_world/pages/menu_screens.dart';
 import 'package:novel_world/router.dart';
 import 'package:flutter/material.dart';
-import 'package:universal_io/io.dart';
-
 import 'firebase_options.dart'; // Import universal_io for platform checks
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  await Hive.initFlutter();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

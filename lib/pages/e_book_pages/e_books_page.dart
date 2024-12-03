@@ -1,19 +1,12 @@
-import 'package:appwrite/models.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async'; // For Timer
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:appwrite/appwrite.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:appwrite/appwrite.dart'; // Appwrite SDK
 import '../../constants/app_write_constants.dart';
-import '../../new_app/front_end/upload_e_books_page.dart';
-import '../../widget/book.dart';
-import '../../widget/cached_images.dart';
-import '../unable_to_upload_books_page.dart';
+import '../../style/colors.dart';
 import 'book_details_page.dart';
-import 'epub_reader_page.dart';
+import 'dart:math';
 
 class EBooksPage extends StatefulWidget {
   const EBooksPage({Key? key}) : super(key: key);
@@ -23,9 +16,20 @@ class EBooksPage extends StatefulWidget {
 }
 
 class _EBooksPageState extends State<EBooksPage> {
+  final List<Map<String, dynamic>> originalBooks = [];
+  List<Map<String, dynamic>> filteredBooks = [];
+  bool isInitialLoading = true;
+  String searchQuery = '';
+  String userId = '';
   final Client client = Client();
   late Databases databases;
 
+  Timer? _updateTimer;
+  int offset = 0;
+  bool hasMoreBooks = true;
+  bool isFetchingMore = false;
+
+  // Categorized books map
   Map<String, List<Map<String, dynamic>>> categorizedBooks = {
     "Nigerian Stories": [],
     "African Tales": [],
@@ -46,513 +50,275 @@ class _EBooksPageState extends State<EBooksPage> {
     'Crime': [],
   };
 
-  List<Map<String, dynamic>> filteredBooks = [];
-  bool isInitialLoading = true;
-  bool isFetching = false;
-  String userId = '';
-
   @override
   void initState() {
     super.initState();
     userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
-    loadBooks();
-    client.setEndpoint(Constants.endpoint).setProject(Constants.projectId);
-    databases = Databases(client);
-    loadBooksFromPreferences().then((_) {
-      shuffleBooks();
-      checkForNewBooks();
+    initializeAppwrite();
+    fetchBooks();
+    _updateTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      fetchBooks(isLoadMore: true);
     });
   }
 
-  Future<void> checkForNewBooks() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final lastFetchTime = prefs.getInt('$userId+lastFetchTime') ?? 0;
-    final currentTime = DateTime.now().millisecondsSinceEpoch;
-
-    if (currentTime - lastFetchTime > Duration(seconds: 120).inMilliseconds) {
-      await fetchBooks();
-      await prefs.setInt('$userId+lastFetchTime', currentTime);
-    }
+  @override
+  void dispose() {
+    _updateTimer?.cancel();
+    super.dispose();
   }
 
+  void initializeAppwrite() {
+    client
+        .setEndpoint(Constants.endpoint)
+        .setProject(Constants.projectId);
+    databases = Databases(client);
+    print('Appwrite Client Initialized');
+  }
 
-
-
-  Future<void> fetchBooks() async {
-    bool hasCache = categorizedBooks.values.any((list) => list.isNotEmpty);
+  Future<void> fetchBooks({bool isLoadMore = false}) async {
+    if (isLoadMore && !hasMoreBooks) return;
+    if (isFetchingMore) return;
 
     setState(() {
-      if (hasCache) {
-        isFetching = true;
+      if (isLoadMore) {
+        isFetchingMore = true;
       } else {
         isInitialLoading = true;
       }
     });
 
     try {
-      int limit = 5; // Fetch 5 documents at a time
-      int offset = 0;
-      List<Document> allDocuments = [];
-      bool hasMore = true;
+      final result = await databases.listDocuments(
+        databaseId: Constants.databaseId,
+        collectionId: Constants.ebooksCollectionId,
+        queries: [
+          Query.limit(5),
+          Query.offset(offset),
+        ],
+      );
 
-      while (hasMore) {
-        final response = await databases.listDocuments(
-          databaseId: Constants.databaseId,
-          collectionId: Constants.ebooksCollectionId,
-          queries: [Query.limit(limit), Query.offset(offset)],
-        );
-
-        allDocuments.addAll(response.documents);
-
-        if (response.documents.length < limit) {
-          hasMore = false; // No more documents to fetch
-        } else {
-          offset += limit; // Increment offset for the next batch
-        }
-
-        if (!mounted) return;
-
-        // Process each batch incrementally
-        setState(() {
-          for (var doc in response.documents) {
-            var bookCategories = doc.data['bookCategories'] ?? [];
-            if (bookCategories is String) {
-              bookCategories = [bookCategories];
-            }
-
-            var bookData = {
-              'authorNames': doc.data['authorNames'] ?? 'Unknown Author',
-              'bookTitle': doc.data['bookTitle'] ?? 'Untitled',
-              'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
-              'bookId': doc.$id, // Unique identifier for the book
-            };
-
-            for (var category in bookCategories) {
-              category = category.trim();
-              if (categorizedBooks.containsKey(category)) {
-                // Check if the book is already in the category
-                if (!categorizedBooks[category]!
-                    .any((book) => book['bookId'] == bookData['bookId'])) {
-                  categorizedBooks[category]!.add(bookData);
-                }
-              }
-            }
-          }
-        });
-
-        // Save each batch to preferences
-        await saveBooksToPreferences();
-      }
-
-      if (!mounted) return;
+      final fetchedBooks = result.documents.map((doc) {
+        return {
+          'bookTitle': doc.data['bookTitle'] ?? '',
+          'authorNames': doc.data['authorNames'] ?? '',
+          'bookCoverUrl': doc.data['bookCoverUrl'] ?? '',
+          'bookId': doc.$id,
+          'bookCategories': doc.data['bookCategories'] ?? [],
+        };
+      }).toList();
 
       setState(() {
-        filteredBooks = categorizedBooks.values.expand((x) => x).toList();
-        shuffleBooks();
-
-        if (hasCache) {
-          isFetching = false;
-        } else {
-          isInitialLoading = false;
+        for (var book in fetchedBooks) {
+          if (!originalBooks.any((existing) => existing['bookId'] == book['bookId'])) {
+            originalBooks.add(book);
+          }
         }
+        filteredBooks = applyFilter(searchQuery);
+        categorizeBooks();
+        offset += fetchedBooks.length;
+        hasMoreBooks = fetchedBooks.isNotEmpty;
       });
     } catch (e) {
       print('Error fetching books: $e');
+    } finally {
       setState(() {
-        if (hasCache) {
-          isFetching = false;
-        } else {
-          isInitialLoading = false;
-        }
+        isFetchingMore = false;
+        isInitialLoading = false;
       });
     }
   }
 
+  void categorizeBooks() {
+    // Clear the existing categories
+    for (var category in categorizedBooks.keys) {
+      categorizedBooks[category]?.clear();
+    }
 
+    // Set to keep track of added books
+    Set<String> addedBooks = {};
 
+    for (var book in originalBooks) {
+      for (var category in book['bookCategories']) {
+        if (categorizedBooks.containsKey(category)) {
+          // Check if the book has already been added to this category
+          if (!addedBooks.contains(book['bookId'])) {
+            categorizedBooks[category]?.add(book);
+            addedBooks.add(book['bookId']);
+          }
+        }
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> applyFilter(String query) {
+    final lowerQuery = query.toLowerCase();
+    return query.isEmpty
+        ? List.from(originalBooks)
+        : originalBooks.where((book) {
+      final title = book['bookTitle']?.toLowerCase() ?? '';
+      final authors = (book['authorNames'] as String?)?.toLowerCase() ?? '';
+      return title.contains(lowerQuery) || authors.contains(lowerQuery);
+    }).toList();
+  }
 
   void shuffleBooks() {
     setState(() {
-      categorizedBooks.forEach((key, value) {
-        value.shuffle();
-      });
-      filteredBooks = categorizedBooks.values.expand((x) => x).toList();
-      filteredBooks.shuffle();
+      originalBooks.shuffle(Random());
+      filteredBooks = applyFilter(searchQuery);
+      categorizeBooks();
     });
+    print('Books shuffled');
   }
 
-  Future<void> saveBooksToPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    for (String category in categorizedBooks.keys) {
-      // Limit each category to 100 books
-      List<Map<String, dynamic>> books = categorizedBooks[category] ?? [];
-      if (books.length > 30) {
-        books = books.sublist(0, 30); // Keep only the first 100 books
-      }
-
-      // Store each category's books separately
-      String jsonBooks = json.encode(books);
-      await prefs.setString('categorizedBooks+$category', jsonBooks);
-    }
-  }
-
-  Future<void> loadBooksFromPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Load each category individually
-    for (String category in categorizedBooks.keys) {
-      String? jsonBooks = prefs.getString('categorizedBooks+$category');
-
-      if (jsonBooks != null) {
-        categorizedBooks[category] = List<Map<String, dynamic>>.from(json.decode(jsonBooks));
-      }
-    }
-
+  void filterBooks(String query) {
     setState(() {
-      filteredBooks = categorizedBooks.values.expand((x) => x).toList();
-      shuffleBooks();
-      isInitialLoading = false;
+      searchQuery = query;
+      filteredBooks = applyFilter(searchQuery);
+      categorizeBooks();
     });
   }
 
-
-  String truncateText(String text) {
-    if (text.length <= 20) {
-      return text;
-    } else {
-      return text.substring(0, 17) + '...';
-    }
-  }
-
-  List<Book> recentBooks = [];
-
-  Future<void> loadBooks() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> recentBooksJson = prefs.getStringList('$userId+recentBooks') ?? [];
-
-    List<Book> loadedRecentBooks =
-    recentBooksJson.map((bookJson) => Book.fromJson(bookJson)).toList();
-
-    setState(() {
-      recentBooks = loadedRecentBooks;
-    });
-  }
-
-  void navigateToBookDetails(Book book) async {
-
-    if (FirebaseAuth.instance.currentUser == null) {
+  void navigateToBookDetails(Map<String, dynamic> book) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
       context.push('/login');
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => BookDetailsPage(
-            bookTitle: book.bookTitle,
-            bookAuthor: book.bookAuthor,
-            bookCover: book.bookCover,
-            bookId: book.bookId,
+            bookTitle: book['bookTitle'],
+            bookAuthor: book['authorNames'],
+            bookCover: book['bookCoverUrl'],
+            bookId: book['bookId'],
           ),
         ),
-      ).then((_) {
-        loadBooks();
-      });
-    }
-  }
-
-
-  Future<String> _fetchAppVersionFromAppwrite() async {
-    try {
-      var document = await databases.getDocument(
-        databaseId: Constants.databaseId, // Replace with your database ID
-        collectionId: Constants.configurationCollectionId, // Replace with your collection ID
-        documentId: Constants.configurationDocumentId, // Replace with your document ID
       );
-      return document.data['UPLOAD_ACCESS'];
-    } catch (e) {
-      print('Error fetching version: $e');
-      return 'false'; // Default version if fetch fails
     }
   }
 
-
+  String truncateText(String text, int size) {
+    return text.length <= size ? text : '${text.substring(0, size)}...';
+  }
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
-        backgroundColor: AppColors.backgroundSecondary,
-        appBar: AppBar(
-          backgroundColor: AppColors.backgroundPrimary,
-          title: const Text(
-            'E-Books',
-            style: TextStyle(color: AppColors.textHighlight),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    // Fetch version from Appwrite
-                    String latestVersion = await _fetchAppVersionFromAppwrite();
-
-                    // Check if the app version matches 'v1'
-                    if (latestVersion == 'yes') {
-                      // If version matches, navigate to UploadEBooksPage
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const UploadEBooksPage(),
-                        ),
-                      );
-                    } else {
-                      // If version doesn't match, navigate to SorryUploadBlockedPage
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SorryUploadBlockedPage(),
-                        ),
-                      );
-                    }
-                  },
-                  style: ButtonStyle(
-                    shape: MaterialStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    side: MaterialStateProperty.all(
-                      BorderSide(color: AppColors.buttonPrimary, width: 2),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.add,
-                    size: 28,
-                    color: AppColors.textPrimary,
-                  ),
-                  label: const Text(
-                    'Upload E-Books',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text(
+          'Search',
+          style: TextStyle(color: AppColors.textHighlight),
         ),
-
-        body: categorizedBooks.values.any((list) => list.isNotEmpty) ? RefreshIndicator(
-          onRefresh: () async {
-            await fetchBooks();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                // Recent Books Section
-                if (recentBooks.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
+      ),
+      body: RefreshIndicator(
+        onRefresh: fetchBooks,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isInitialLoading)
+                const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary))
+              else if (filteredBooks.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(
                     child: Text(
-                      'Continue Reading',
+                      "No books found.",
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
-                // Recent Books Horizontal List
-                if (recentBooks.isNotEmpty)
-                  SizedBox(
-                    height: 300, // Adjust the height of the horizontal list
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal, // Horizontal scrolling
-                      itemCount:
-                      recentBooks.length > 10 ? 10 : recentBooks.length, // Limit to a maximum of 10 books
-                      itemBuilder: (context, index) {
-                        final book = recentBooks[index];
-                        return GestureDetector(
-                          onTap: () => navigateToBookDetails(book),
-                          child: Container(
-                            width: 160, // Width of each book item
-                            margin: const EdgeInsets.only(right: 8.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: AppColors.cardBackground,
-                              border: Border.all(color: AppColors.textPrimary),
-                            ),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: CachedNetworkImage(
-                                    imageUrl: book.bookCover,
-                                    imageBuilder: (context, imageProvider) => Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        image: DecorationImage(
-                                          image: imageProvider,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                    placeholder: (context, url) =>
-                                    const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
-                                    errorWidget: (context, url, error) =>
-                                    const Icon(Icons.error),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        truncateText(book.bookTitle),
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        truncateText(book.bookAuthor),
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: AppColors.textSecondary),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                )
+              else
+              // Display categorized books in a scrollable format
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: categorizedBooks.keys.length,
+                  itemBuilder: (context, index) {
+                    final category = categorizedBooks.keys.elementAt(index);
+                    final booksInCategory = categorizedBooks[category]!;
+                    return booksInCategory.isEmpty
+                        ? Container()
+                        : Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              category,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                // Display each category of books
-                ...categorizedBooks.entries.map((entry) {
-                  String category = entry.key;
-                  List<Map<String, dynamic>> books = entry.value;
-
-                  if (books.isEmpty) return const SizedBox.shrink();
-
-                  return Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          category,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          height: 210, // Adjust the height of the horizontal list
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal, // Horizontal scrolling
-                            itemCount: books.length,
-                            itemBuilder: (context, index) {
-                              var book = books[index];
-                              return GestureDetector(
-                                onTap: () async {
-                                  // Check if the user is authenticated
-                                  final user = FirebaseAuth.instance.currentUser;
-
-                                  if (user == null) {
-                                    // If not logged in, navigate to the login page
-                                    context.push('/login');
-                                  } else {
-                                    // If logged in, navigate to the book details page
-                                    navigateToBookDetails(Book(
-                                      bookTitle: book['bookTitle'],
-                                      bookAuthor: book['authorNames'],
-                                      bookCover: book['bookCoverUrl'],
-                                      bookId: book['bookId'],
-                                    ));
-                                  }
-                                },
-                                child: Container(
-                                  width: 120, // Width of each book item
-                                  margin: const EdgeInsets.only(right: 8.0),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: AppColors.cardBackground,
-                                    border: Border.all(color: AppColors.textPrimary),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Expanded(
-                                        child: CachedNetworkImage(
-                                          imageUrl: book['bookCoverUrl'],
-                                          imageBuilder: (context, imageProvider) => Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(10),
-                                              image: DecorationImage(
-                                                image: imageProvider,
-                                                fit: BoxFit.cover,
-                                              ),
+                          Container(
+                            height: 200,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: booksInCategory.length,
+                              itemBuilder: (context, bookIndex) {
+                                final book = booksInCategory[bookIndex];
+                                return GestureDetector(
+                                  onTap: () => navigateToBookDetails(book),
+                                  child: Card(
+                                    color: Colors.grey[900],
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Column(
+                                        children: [
+                                          Image.network(
+                                            book['bookCoverUrl'],
+                                            width: 100,
+                                            height: 150,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            truncateText(book['bookTitle'], 15),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
                                             ),
                                           ),
-                                          placeholder: (context, url) =>
-                                          const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
-                                          errorWidget: (context, url, error) =>
-                                          const Icon(Icons.error),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          children: [
-                                            Text(
-                                              truncateText(book['bookTitle']),
-                                              style: const TextStyle(
-                                                color: AppColors.textPrimary,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                          Text(
+                                            truncateText(book['authorNames'], 15),
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey,
                                             ),
-                                            Text(
-                                              truncateText(book['authorNames']),
-                                              style: const TextStyle(color: AppColors.textSecondary),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
-            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+            ],
           ),
-        )
-            :
-        Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,))
+        ),
+      ),
     );
   }
 }
