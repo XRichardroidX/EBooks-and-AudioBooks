@@ -7,6 +7,7 @@ import 'package:novel_world/pages/subscription/update_subscription.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
 import '../../constants/app_write_constants.dart';
+import 'card_page.dart';
 
 class SubscriptionPage extends StatelessWidget {
   const SubscriptionPage({super.key});
@@ -21,56 +22,59 @@ class SubscriptionPage extends StatelessWidget {
 
   // Function to handle subscription button tap
   void _onSubscribeTap(BuildContext context, String planName) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
 
-    if (currentUser == null) {
-      showCustomSnackbar(
-        context,
-        'Subscription Failed',
-        'No user is currently logged in.',
-        AppColors.error,
-      );
-      print('User is not logged in.');
-      return;
-    }
+    Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentPage()));
 
-    final email = FirebaseAuth.instance.currentUser!.email;
-
-    final ref = generateRef();
-    final amount = planName == 'monthly' ? int.parse('1000') : int.parse('9500');
-    try {
-      return await FlutterPaystackPlus.openPaystackPopup(
-          publicKey: Constants.PAYSTACK_PUBLIC_KEY,
-          context: context,
-          secretKey: Constants.PAYSTACK_SECRET_KEY,
-          currency: 'NGN',
-          customerEmail: email!,
-          amount: (amount * 100).toString(),
-          reference: ref,
-          callBackUrl: "https://console.firebase.google.com/",
-          onClosed: () {
-            debugPrint('Could\'nt finish payment');
-            showCustomSnackbar(
-              context,
-              'Payment',
-              'Payment unsuccessful for $planName Plan!',
-              AppColors.error,
-            );
-          },
-          onSuccess: () async {
-            await updateSubscription(currentUser.uid, planName, 'success');
-              showCustomSnackbar(
-                context,
-                'Payment',
-                'Payment successful for $planName Plan!',
-                AppColors.success,
-              );
-              context.pushReplacement('/menuscreens');
-            debugPrint('Payment successful');
-          });
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+    // final currentUser = FirebaseAuth.instance.currentUser;
+    //
+    // if (currentUser == null) {
+    //   showCustomSnackbar(
+    //     context,
+    //     'Subscription Failed',
+    //     'No user is currently logged in.',
+    //     AppColors.error,
+    //   );
+    //   print('User is not logged in.');
+    //   return;
+    // }
+    //
+    // final email = FirebaseAuth.instance.currentUser!.email;
+    //
+    // final ref = generateRef();
+    // final amount = planName == 'monthly' ? int.parse('1000') : int.parse('9500');
+    // try {
+    //   return await FlutterPaystackPlus.openPaystackPopup(
+    //       publicKey: Constants.PAYSTACK_PUBLIC_KEY,
+    //       context: context,
+    //       secretKey: Constants.PAYSTACK_SECRET_KEY,
+    //       currency: 'NGN',
+    //       customerEmail: email!,
+    //       amount: (amount * 100).toString(),
+    //       reference: ref,
+    //       callBackUrl: "https://console.firebase.google.com/",
+    //       onClosed: () {
+    //         debugPrint('Could\'nt finish payment');
+    //         showCustomSnackbar(
+    //           context,
+    //           'Payment',
+    //           'Payment unsuccessful for $planName Plan!',
+    //           AppColors.error,
+    //         );
+    //       },
+    //       onSuccess: () async {
+    //         await updateSubscription(currentUser.uid, planName, 'success');
+    //           showCustomSnackbar(
+    //             context,
+    //             'Payment',
+    //             'Payment successful for $planName Plan!',
+    //             AppColors.success,
+    //           );
+    //           context.pushReplacement('/menuscreens');
+    //         debugPrint('Payment successful');
+    //       });
+    // } catch (e) {
+    //   debugPrint(e.toString());
+    // }
 
   }
 
@@ -89,7 +93,7 @@ class SubscriptionPage extends StatelessWidget {
         ),
         title: const Center(
           child: Text(
-            'Subscribe to NovelWorld',
+            'Subscribe to Novel City',
             style: TextStyle(
               color: AppColors.textHighlight,
               fontWeight: FontWeight.bold,
@@ -132,7 +136,7 @@ class SubscriptionPage extends StatelessWidget {
                 'Monthly Plan',
                 'Unlimited books for a month',
                 '\₦1000/month',
-                'Subscribe for 1 Month',
+                'Subscribe for 30 Days',
                   AppColors.textHighlight,
                     () => _onSubscribeTap(context, 'monthly'),
               ),
@@ -142,7 +146,7 @@ class SubscriptionPage extends StatelessWidget {
                 'Yearly Plan',
                 'Unlimited books for 12 whole month',
                 '\₦9,500/year',
-                'Subscribe for 1 Year',
+                'Subscribe for 12 Months',
                   AppColors.textHighlight,
                     () => _onSubscribeTap(context, 'yearly'),
               ),
