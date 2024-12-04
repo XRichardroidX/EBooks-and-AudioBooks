@@ -1,81 +1,56 @@
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novel_world/pages/subscription/update_subscription.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:novel_world/widget/snack_bar_message.dart';
-import '../../constants/app_write_constants.dart';
-import 'card_page.dart';
 
 class SubscriptionPage extends StatelessWidget {
   const SubscriptionPage({super.key});
 
+  // Function to handle subscription button tap for recurring payment
+  void _onSubscribeTap(BuildContext context) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
 
+    if (currentUser == null) {
+      showCustomSnackbar(
+        context,
+        'Subscription Failed',
+        'No user is currently logged in.',
+        AppColors.error,
+      );
+      print('User is not logged in.');
+      return;
+    }
 
-  String generateRef() {
-    final randomCode = Random().nextInt(3234234);
-    return 'ref-$randomCode';
+    final email = currentUser.email;
+
+    // Redirect user to Paystack recurring payment page
+    _redirectToPaystackRecurringPayment(context, email!);
   }
 
+  // Redirects the user to Paystack recurring payment page with their email prefilled
+  Future<void> _redirectToPaystackRecurringPayment(BuildContext context, String email) async {
+    const String paystackUrl = 'https://paystack.com/pay/j9dmo9lc0f';
+    final Uri paymentUri = Uri.parse('$paystackUrl?email=$email');
 
-  // Function to handle subscription button tap
-  void _onSubscribeTap(BuildContext context, String planName) async {
-
-    Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentPage()));
-
-    // final currentUser = FirebaseAuth.instance.currentUser;
-    //
-    // if (currentUser == null) {
-    //   showCustomSnackbar(
-    //     context,
-    //     'Subscription Failed',
-    //     'No user is currently logged in.',
-    //     AppColors.error,
-    //   );
-    //   print('User is not logged in.');
-    //   return;
-    // }
-    //
-    // final email = FirebaseAuth.instance.currentUser!.email;
-    //
-    // final ref = generateRef();
-    // final amount = planName == 'monthly' ? int.parse('1000') : int.parse('9500');
-    // try {
-    //   return await FlutterPaystackPlus.openPaystackPopup(
-    //       publicKey: Constants.PAYSTACK_PUBLIC_KEY,
-    //       context: context,
-    //       secretKey: Constants.PAYSTACK_SECRET_KEY,
-    //       currency: 'NGN',
-    //       customerEmail: email!,
-    //       amount: (amount * 100).toString(),
-    //       reference: ref,
-    //       callBackUrl: "https://console.firebase.google.com/",
-    //       onClosed: () {
-    //         debugPrint('Could\'nt finish payment');
-    //         showCustomSnackbar(
-    //           context,
-    //           'Payment',
-    //           'Payment unsuccessful for $planName Plan!',
-    //           AppColors.error,
-    //         );
-    //       },
-    //       onSuccess: () async {
-    //         await updateSubscription(currentUser.uid, planName, 'success');
-    //           showCustomSnackbar(
-    //             context,
-    //             'Payment',
-    //             'Payment successful for $planName Plan!',
-    //             AppColors.success,
-    //           );
-    //           context.pushReplacement('/menuscreens');
-    //         debugPrint('Payment successful');
-    //       });
-    // } catch (e) {
-    //   debugPrint(e.toString());
-    // }
-
+    try {
+      // Launch the Paystack payment page
+      if (await canLaunchUrl(paymentUri)) {
+        await launchUrl(paymentUri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $paymentUri';
+      }
+    } catch (e) {
+      showCustomSnackbar(
+        context,
+        'Error',
+        'Failed to redirect to payment page: ${e.toString()}',
+        AppColors.error,
+      );
+      print(e.toString());
+    }
   }
 
   @override
@@ -88,9 +63,7 @@ class SubscriptionPage extends StatelessWidget {
         actions: [
           IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_forward_ios)),
         ],
-        iconTheme: IconThemeData(
-          color: AppColors.textPrimary
-        ),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
         title: const Center(
           child: Text(
             'Subscribe to Novel City',
@@ -108,7 +81,6 @@ class SubscriptionPage extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Title and description section
               const SizedBox(height: 30),
               Text(
                 'Unlimited Access to Thousands of Books!',
@@ -130,25 +102,15 @@ class SubscriptionPage extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // Subscription Plans
+              // Subscription Plan
               _buildSubscriptionPlan(
                 context,
-                'Monthly Plan',
-                'Unlimited books for a month',
-                '\₦1000/month',
-                'Subscribe for 30 Days',
-                  AppColors.textHighlight,
-                    () => _onSubscribeTap(context, 'monthly'),
-              ),
-              const SizedBox(height: 30),
-              _buildSubscriptionPlan(
-                context,
-                'Yearly Plan',
-                'Unlimited books for 12 whole month',
-                '\₦9,500/year',
-                'Subscribe for 12 Months',
-                  AppColors.textHighlight,
-                    () => _onSubscribeTap(context, 'yearly'),
+                'Recurring Plan',
+                'Unlimited books for a recurring subscription',
+                '₦1000/month',
+                'Subscribe Now',
+                AppColors.textHighlight,
+                    () => _onSubscribeTap(context),
               ),
               const SizedBox(height: 40),
 
@@ -164,7 +126,6 @@ class SubscriptionPage extends StatelessWidget {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // Navigate back or to another screen if needed
                   context.pop();
                 },
                 style: ElevatedButton.styleFrom(
@@ -189,7 +150,7 @@ class SubscriptionPage extends StatelessWidget {
     );
   }
 
-  // Function to build each subscription plan card
+  // Function to build the subscription plan card
   Widget _buildSubscriptionPlan(
       BuildContext context,
       String title,
@@ -201,7 +162,7 @@ class SubscriptionPage extends StatelessWidget {
       ) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[900], // Dark grey background for the plan card
+        color: Colors.grey[900],
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color, width: 2),
       ),
@@ -238,7 +199,7 @@ class SubscriptionPage extends StatelessWidget {
           ElevatedButton(
             onPressed: onTap,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.textHighlight, // Red Netflix-style button
+              backgroundColor: AppColors.textHighlight,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
