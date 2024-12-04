@@ -37,7 +37,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
     userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     initializeAppwrite();
     fetchBooks();
-    _updateTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
+    _updateTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       fetchBooks(isLoadMore: true);
     });
   }
