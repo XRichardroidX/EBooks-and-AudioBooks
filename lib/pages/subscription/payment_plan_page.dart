@@ -10,7 +10,7 @@ class SubscriptionPage extends StatelessWidget {
   const SubscriptionPage({super.key});
 
   // Function to handle subscription button tap for recurring payment
-  void _onSubscribeTap(BuildContext context) async {
+  void _onSubscribeTap(BuildContext context, subType) async {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser == null) {
@@ -27,12 +27,14 @@ class SubscriptionPage extends StatelessWidget {
     final email = currentUser.email;
 
     // Redirect user to Paystack recurring payment page
-    _redirectToPaystackRecurringPayment(context, email!);
+    _redirectToPaystackRecurringPayment(context, email!, subType);
   }
 
   // Redirects the user to Paystack recurring payment page with their email prefilled
-  Future<void> _redirectToPaystackRecurringPayment(BuildContext context, String email) async {
-    const String paystackUrl = 'https://paystack.com/pay/j9dmo9lc0f';
+  Future<void> _redirectToPaystackRecurringPayment(BuildContext context, String email, String subType) async {
+
+
+    String paystackUrl = subType == 'monthly' ? 'https://paystack.com/pay/kyvcpqze50' : 'https://paystack.com/pay/y6kawu2nlz';
     final Uri paymentUri = Uri.parse('$paystackUrl?email=$email');
 
     try {
@@ -57,25 +59,6 @@ class SubscriptionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black, // Netflix-style dark background
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios)),
-        actions: [
-          IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_forward_ios)),
-        ],
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        title: const Center(
-          child: Text(
-            'Subscribe to Novel City',
-            style: TextStyle(
-              color: AppColors.textHighlight,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
-          ),
-        ),
-        elevation: 0,
-      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -83,7 +66,7 @@ class SubscriptionPage extends StatelessWidget {
             children: [
               const SizedBox(height: 30),
               Text(
-                'Unlimited Access to Thousands of Books!',
+                'Unlimited Access to Millions of Stories!',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -91,7 +74,7 @@ class SubscriptionPage extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 2),
               Text(
                 'Choose a plan that works best for you and your family.',
                 style: TextStyle(
@@ -100,20 +83,29 @@ class SubscriptionPage extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 10),
 
               // Subscription Plan
               _buildSubscriptionPlan(
                 context,
-                'Recurring Plan',
-                'Unlimited books for a recurring subscription',
-                '₦2,500/month',
+                'Monthly Plan',
+                'Unlimited books for a whole Month on a recurring subscription plan',
+                '₦2,500/Month',
                 'Subscribe Now',
                 AppColors.textHighlight,
-                    () => doNotModifyEmailWarning(context),
+                    () => doNotModifyEmailWarning(context, 'monthly'),
               ),
-              const SizedBox(height: 40),
-
+              const SizedBox(height: 10),
+             // Subscription Plan
+              _buildSubscriptionPlan(
+                context,
+                'Yearly Plan',
+                'Unlimited books for 12 whole Months on a recurring subscription plan',
+                '₦25,000/Year',
+                'Subscribe Now',
+                AppColors.textHighlight,
+                    () => doNotModifyEmailWarning(context, 'yearly'),
+              ),
               // Footer section or additional message
               Text(
                 'Enjoy thousands of books, no ads, and offline reading!',
@@ -123,7 +115,7 @@ class SubscriptionPage extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
                   context.pop();
@@ -221,7 +213,7 @@ class SubscriptionPage extends StatelessWidget {
   }
 
   // Cancel Subscription Pop-Up message
-  void doNotModifyEmailWarning(BuildContext context) {
+  void doNotModifyEmailWarning(BuildContext context, String subType) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -245,7 +237,7 @@ class SubscriptionPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () {
-               _onSubscribeTap(context); // Close the dialog
+               _onSubscribeTap(context, subType); // Close the dialog
                context.pop();
                context.pop();
                context.pushReplacement('/menuscreens');
