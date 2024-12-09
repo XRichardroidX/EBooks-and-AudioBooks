@@ -107,10 +107,10 @@ class SubscriptionPage extends StatelessWidget {
                 context,
                 'Recurring Plan',
                 'Unlimited books for a recurring subscription',
-                '₦1000/month',
+                '₦2,500/month',
                 'Subscribe Now',
                 AppColors.textHighlight,
-                    () => _onSubscribeTap(context),
+                    () => doNotModifyEmailWarning(context),
               ),
               const SizedBox(height: 40),
 
@@ -219,4 +219,50 @@ class SubscriptionPage extends StatelessWidget {
       ),
     );
   }
+
+  // Cancel Subscription Pop-Up message
+  void doNotModifyEmailWarning(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.backgroundSecondary,
+          title: const Text(
+            'About to subscribe',
+            style: TextStyle(
+              color: AppColors.success,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'Please do not change the email and replace it with a different one, it is linked with your account, reach out to us if you have any questions.',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+               _onSubscribeTap(context); // Close the dialog
+               context.pop();
+               context.pop();
+               context.pushReplacement('/menuscreens');
+              },
+              child: const Text(
+                'Continue',
+                style: TextStyle(
+                    color: AppColors.textPrimary
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
+
+

@@ -286,8 +286,12 @@ class _EBooksPageState extends State<EBooksPage> {
         appBar: AppBar(
           backgroundColor: AppColors.backgroundPrimary,
           title: const Text(
-            'E-Books',
-            style: TextStyle(color: AppColors.textHighlight),
+            'Categories',
+            style: TextStyle(
+              fontSize: 22,
+                color: AppColors.textHighlight,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           actions: [
             Padding(

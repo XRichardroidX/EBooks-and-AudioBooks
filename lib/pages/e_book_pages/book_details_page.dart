@@ -69,6 +69,38 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
 
+
+  Future<Map<String, dynamic>?> fetchUserDetails(String userId) async {
+    try {
+      // Initialize the Appwrite client
+      client
+        ..setEndpoint(Constants.endpoint) // Your Appwrite Endpoint
+        ..setProject(Constants.projectId); // Your Project ID
+
+      databases = Databases(client);
+      print("Fetching user details from Appwrite...");
+      final response = await databases.listDocuments(
+        databaseId: Constants.databaseId, // Replace with your actual database ID
+        collectionId: Constants.usersCollectionId, // Replace with your actual collection ID
+        queries: [
+          Query.equal('userId', userId), // Assuming 'userId' is the attribute name in Appwrite
+        ],
+      );
+
+      print("Response from Appwrite: ${response.documents.length} documents found.");
+
+      if (response.documents.isNotEmpty) {
+        // Assuming the first document is the correct one
+        return response.documents[0].data;
+      }
+    } catch (e) {
+      print('Error fetching user details: $e');
+    }
+    return null;
+  }
+
+
+
   Future<String?> getBookBody(String documentId) async {
     try {
 
@@ -80,6 +112,12 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         });
         return savedBookBody;
       }
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final userDetails = await fetchUserDetails(userId);
+      await prefs.setString('$userId+startSub', userDetails!['startSub'] ?? '');
+      await prefs.setString('$userId+endSub', userDetails['endSub'] ?? '');
 
       // Initialize the Appwrite client
       final client = Client()
