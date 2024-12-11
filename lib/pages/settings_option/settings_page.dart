@@ -58,6 +58,9 @@ class _SettingsPageState extends State<SettingsPage> {
     String? cachedUserEmail = prefs.getString('$userId+userEmail');
 
     if (cachedUserName != null && cachedUserEmail != null) {
+      final userDetails = await fetchUserDetails(userId);
+      await prefs.setString('$userId+startSub', userDetails!['startSub'] ?? '');
+      await prefs.setString('$userId+endSub', userDetails['endSub'] ?? '');
       // Load data from SharedPreferences if available
       setState(() {
         userName = cachedUserName;
@@ -79,6 +82,8 @@ class _SettingsPageState extends State<SettingsPage> {
           // Save the fetched details in SharedPreferences for future use
           await prefs.setString('$userId+userName', userDetails['userName'] ?? '');
           await prefs.setString('$userId+userEmail', userDetails['email'] ?? '');
+          await prefs.setString('$userId+startSub', userDetails['startSub'] ?? '');
+          await prefs.setString('$userId+endSub', userDetails['endSub'] ?? '');
 
           setState(() {
             userName = userDetails['userName'] ?? '';
@@ -143,10 +148,11 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: Text(
-          "Settings",
+        title:  Text(
+          'Settings',
           style: TextStyle(
-            fontSize: 25,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
             color: AppColors.textHighlight,
           ),
         ),
@@ -187,6 +193,24 @@ class _SettingsPageState extends State<SettingsPage> {
                       color: isSubscriptionActive() ? AppColors.success : AppColors.textHighlight,
                     ),
                   ),
+                  isSubscriptionActive() ? ElevatedButton(
+                    onPressed: () {
+                      _showManageSubscriptionMessageDialog(context); // Navigate to subscription page
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.backgroundSecondary, // Button color
+                    ),
+                    child: Text(
+                      "Cancel Sub",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textHighlight
+                      ),
+                    ),
+                  )
+                  :
+                  Container(),
                   if (!isSubscriptionActive())
                     ElevatedButton(
                       onPressed: () {
@@ -417,6 +441,49 @@ void _showLogoutDialog(BuildContext context) {
               'Yes',
               style: TextStyle(
                   color: AppColors.textHighlight
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+
+
+// Cancel Subscription Pop-Up message
+void _showManageSubscriptionMessageDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: AppColors.backgroundSecondary,
+        title: const Text(
+          'Manage Subscription',
+          style: TextStyle(
+            color: AppColors.textHighlight,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'To change your card or cancel your subscription plan, click on the Manage Subscription button in one of the mails we sent to you the day you subscribed.',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: const Text(
+              'Got it !',
+              style: TextStyle(
+                  color: AppColors.textPrimary
               ),
             ),
           ),

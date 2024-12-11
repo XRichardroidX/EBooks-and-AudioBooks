@@ -103,9 +103,11 @@ class _BookListPageState extends State<BookListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'My Booklist',
+        title: const  Text(
+          'Bookmark',
           style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
             color: AppColors.textHighlight,
           ),
         ),
