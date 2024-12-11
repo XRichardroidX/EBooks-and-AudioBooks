@@ -1,10 +1,11 @@
-import 'dart:async'; // For Timer
+import 'dart:async';
 import 'dart:convert';
 import 'package:appwrite/models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:appwrite/appwrite.dart'; // Appwrite SDK
+import 'package:appwrite/appwrite.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_write_constants.dart';
 import '../style/colors.dart';
 import 'e_book_pages/book_details_page.dart';
@@ -20,7 +21,6 @@ class FilterBooksPage extends StatefulWidget {
 class _FilterBooksPageState extends State<FilterBooksPage> {
   final List<Map<String, dynamic>> originalBooks = [];
   List<Map<String, dynamic>> filteredBooks = [];
-  bool isInitialLoading = true;
   String searchQuery = '';
   String userId = '';
   final Client client = Client();
@@ -36,9 +36,10 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
     super.initState();
     userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     initializeAppwrite();
-    fetchBooks();
+    loadBooksFromLocalStorage();
     _updateTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       fetchBooks(isLoadMore: true);
+      shuffleBooks();
     });
   }
 
@@ -56,16 +57,31 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
     print('Appwrite Client Initialized');
   }
 
+  Future<void> loadBooksFromLocalStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedBooks = prefs.getString('cachedBooks');
+    if (storedBooks != null) {
+      final List<dynamic> bookList = jsonDecode(storedBooks);
+      setState(() {
+        originalBooks.addAll(bookList.cast<Map<String, dynamic>>());
+        filteredBooks = applyFilter(searchQuery);
+      });
+      print('Books loaded from local storage');
+    }
+  }
+
+  Future<void> saveBooksToLocalStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cachedBooks', jsonEncode(originalBooks));
+    print('Books saved to local storage');
+  }
+
   Future<void> fetchBooks({bool isLoadMore = false}) async {
     if (isLoadMore && !hasMoreBooks) return;
     if (isFetchingMore) return;
 
     setState(() {
-      if (isLoadMore) {
-        isFetchingMore = true;
-      } else {
-        isInitialLoading = true;
-      }
+      isFetchingMore = isLoadMore;
     });
 
     try {
@@ -98,12 +114,13 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
         offset += fetchedBooks.length;
         hasMoreBooks = fetchedBooks.isNotEmpty;
       });
+
+      await saveBooksToLocalStorage();
     } catch (e) {
       print('Error fetching books: $e');
     } finally {
       setState(() {
         isFetchingMore = false;
-        isInitialLoading = false;
       });
     }
   }
@@ -161,15 +178,8 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'Search',
-          style: TextStyle(color: AppColors.textHighlight),
-        ),
-      ),
       body: RefreshIndicator(
-        onRefresh: fetchBooks,
+        onRefresh: () => fetchBooks(isLoadMore: true),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -193,14 +203,12 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                   ),
                 ),
               ),
-              if (isInitialLoading)
-                const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary))
-              else if (filteredBooks.isEmpty)
+              if (filteredBooks.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Center(
                     child: Text(
-                      "No books found.",
+                      "",
                       style: TextStyle(
                         fontSize: 16,
                         color: AppColors.textSecondary,
@@ -248,6 +256,14 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
                                     const SizedBox(height: 4),
                                     Text(
                                       "Author: ${truncateText(book['authorNames'], 40)}",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "Category: ${(book['bookCategories'] as List<dynamic>).join(' | ')}",
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: AppColors.textSecondary,

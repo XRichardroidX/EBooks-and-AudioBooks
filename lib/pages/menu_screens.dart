@@ -1,10 +1,9 @@
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:flutter/material.dart';
 import 'package:novel_world/pages/book_search.dart';
 import 'package:novel_world/pages/book_list_page.dart';
 import 'package:novel_world/pages/settings_option/settings_page.dart';
 import 'package:novel_world/pages/update_app_page.dart';
 import 'package:novel_world/style/colors.dart';
-import 'package:flutter/material.dart';
 import '../constants/app_write_constants.dart';
 import 'e_book_pages/e_books_page.dart';
 import 'package:appwrite/appwrite.dart'; // Appwrite SDK for checking version
@@ -53,49 +52,41 @@ class _MenuScreensState extends State<MenuScreens> {
     });
   }
 
-  // Load the stored version from shared preferences
   Future<void> _loadStoredVersion() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      AppwriteAppVersion = prefs.getString('appVersion') ?? 'v2'; // Default to 'v1' if not found
+      AppwriteAppVersion = prefs.getString('appVersion') ?? 'v2';
     });
   }
 
-  // Store the latest version in shared preferences
   Future<void> _storeVersion(String version) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('appVersion', version);
   }
 
-  // Function to fetch the latest app version from Appwrite
   Future<void> _checkForUpdates() async {
     try {
       var document = await databases.getDocument(
-        databaseId: Constants.databaseId, // Replace with your database ID
-        collectionId: Constants.configurationCollectionId, // Replace with your collection ID
-        documentId: Constants.configurationDocumentId, // Replace with your document ID that contains APPLICATION_VERSION
+        databaseId: Constants.databaseId,
+        collectionId: Constants.configurationCollectionId,
+        documentId: Constants.configurationDocumentId,
       );
 
       String latestVersion = document.data['APPLICATION_VERSION'];
-
-      // Store the version locally
       _storeVersion(latestVersion);
 
       setState(() {
         AppwriteAppVersion = latestVersion;
       });
 
-      // If there's a version mismatch, trigger the update prompt
       if (AppwriteAppVersion != appVersion) {
         _showUpdatePrompt();
       }
     } catch (e) {
-      // Handle errors, e.g., no internet connection
       print('Error fetching application version: $e');
     }
   }
 
-  // Function to show update prompt with 2-second delay
   void _showUpdatePrompt() async {
     if (mounted) {
       await Future.delayed(Duration(seconds: 2));
@@ -105,67 +96,53 @@ class _MenuScreensState extends State<MenuScreens> {
     }
   }
 
-  // This List is for Icons that are active
-  final List<IconData> _activeIcons = [
-    Icons.menu_book_sharp,
-    Icons.search,
-    Icons.bookmark,
-    Icons.settings,
+  final List<Widget> _pages = [
+    EBooksPage(),
+    FilterBooksPage(),
+    BookListPage(),
+    SettingsPage(),
   ];
-
-  // This List is for Icons that are inactive
-  final List<IconData> _inactiveIcons = [
-    Icons.menu_book_sharp,
-    Icons.search,
-    Icons.bookmark,
-    Icons.settings,
-  ];
-
-  // This is widget switches pages on a selected tap
-  Widget PageTransition(int currentPage) {
-    if (AppwriteAppVersion == appVersion) {
-      switch (currentPage) {
-        case 0:
-          return EBooksPage();
-        case 1:
-          return FilterBooksPage();
-        case 2:
-          return BookListPage();
-        case 3:
-          return SettingsPage();
-        default:
-          return EBooksPage();
-      }
-    } else {
-      return UpdatePromptPage();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      // This is the Bottom Navigation bar
-      bottomNavigationBar: CurvedNavigationBar(
-        backgroundColor: Colors.transparent,
-        color: AppColors.backgroundSecondary,
-        animationDuration: const Duration(milliseconds: 400),
-        onTap: (index) {
-          setState(() {
-            _currentPage = index;
-          });
-        },
-        items: List.generate(
-          _activeIcons.length,
-              (index) {
-            return _currentPage == index
-                ? Icon((_activeIcons[index]), color: AppColors.textPrimary)
-                : (Icon((_inactiveIcons[index]), color: AppColors.buttonSecondary));
-          },
+    return DefaultTabController(
+      length: _pages.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Top Stories Worldwide in one place', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.backgroundSecondary,
+          bottom: TabBar(
+            indicatorColor: AppColors.textHighlight,
+            onTap: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            tabs: [
+              Tab(
+                icon: Icon(Icons.menu_book_sharp, color: AppColors.iconColor),
+                child: Text('Home', style: TextStyle(color: AppColors.textPrimary)),
+              ),
+              Tab(
+                icon: Icon(Icons.search, color: AppColors.iconColor),
+                child: Text('Search', style: TextStyle(color: AppColors.textPrimary)),
+              ),
+              Tab(
+                icon: Icon(Icons.auto_stories, color: AppColors.iconColor),
+                child: Text('History', style: TextStyle(color: AppColors.textPrimary)),
+              ),
+              Tab(
+                icon: Icon(Icons.person, color: AppColors.iconColor),
+                child: Text('Profile', style: TextStyle(color: AppColors.textPrimary)),
+              ),
+            ],
+          ),
         ),
+        body: AppwriteAppVersion == appVersion
+            ? TabBarView(children: _pages)
+            : UpdatePromptPage(),
+        backgroundColor: AppColors.backgroundPrimary,
       ),
-      // This is the App Body
-      body: PageTransition(_currentPage!),
     );
   }
 }

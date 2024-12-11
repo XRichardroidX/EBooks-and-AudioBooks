@@ -1,13 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novel_world/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widget/book.dart';
-import '../widget/cached_images.dart';
 import '../widget/snack_bar_message.dart';
-import 'e_book_pages/book_details_page.dart'; // Assuming this contains your custom cache manager
+import 'e_book_pages/book_details_page.dart';
 
 class BookListPage extends StatefulWidget {
   const BookListPage({Key? key}) : super(key: key);
@@ -66,9 +66,7 @@ class _BookListPageState extends State<BookListPage> {
     showCustomSnackbar(context, 'Read List', 'Book removed from your list', AppColors.info);
   }
 
-
   void navigateToBookDetails(Book book) async {
-
     if (FirebaseAuth.instance.currentUser == null) {
       context.push('/login');
     } else {
@@ -88,7 +86,6 @@ class _BookListPageState extends State<BookListPage> {
     }
   }
 
-
   // Helper function to truncate text
   String truncateText(String text) {
     if (text.length <= 20) {
@@ -98,20 +95,9 @@ class _BookListPageState extends State<BookListPage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'My Booklist',
-          style: TextStyle(
-            color: AppColors.textHighlight,
-          ),
-        ),
-        backgroundColor: AppColors.backgroundPrimary,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-      ),
       body: Container(
         color: AppColors.backgroundSecondary,
         child: ListView(
@@ -121,7 +107,7 @@ class _BookListPageState extends State<BookListPage> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
-                  'Recently Read',
+                  'Continue Reading',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -131,43 +117,76 @@ class _BookListPageState extends State<BookListPage> {
               ),
             if (recentBooks.isNotEmpty)
               SizedBox(
-                height: 180, // Adjust the height of the horizontal list
+                height: MediaQuery.of(context).size.height * 0.5, // Adjust the height of the horizontal list
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal, // Horizontal scrolling
-                  itemCount: recentBooks.length > 10
-                      ? 10
-                      : recentBooks.length, // Limit to a maximum of 10 books
+                  itemCount: 1, // Limit to a maximum of 10 books
                   itemBuilder: (context, index) {
                     final book = recentBooks[index];
-                    return GestureDetector(
+                    return InkWell(
                       onTap: () => navigateToBookDetails(book),
                       child: Container(
-                        width: 120,
-                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                        width: MediaQuery.of(context).size.width,
+                        margin: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundOverlay,
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            CachedNetworkImage(
-                              imageUrl: book.bookCover,
-                              cacheManager: CustomCacheManager(),
-                              width: 100,
-                              height: 120,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) =>
-                              Center(child: const CircularProgressIndicator(color: AppColors.buttonPrimary,)),
-                              errorWidget: (context, url, error) => Container(
-                                width: 100,
-                                height: 120,
-                                color: Colors.grey,
-                                child: const Icon(Icons.error),
-                              ),
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: MediaQuery.of(context).size.height * 0.4,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(20),
+                                    image: DecorationImage(
+                                      fit: BoxFit.fill,
+                                      image: NetworkImage(book.bookCover),
+                                    ),
+                                  ),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                    child: Container(
+                                      color: Colors.black.withOpacity(0.6),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: MediaQuery.of(context).size.height * 0.32,
+                                  width: MediaQuery.of(context).size.width * 0.3,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.backgroundSecondary,
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(20),
+                                    image: DecorationImage(
+                                      fit: BoxFit.contain,
+                                      image: NetworkImage(book.bookCover),
+                                    ),
+                                  ),
+                                  child: book.bookCover.isEmpty
+                                      ? Text(
+                                    '${book.bookTitle} Book Cover \n No Image Available',
+                                    style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                                    textAlign: TextAlign.center,
+                                  )
+                                      : null,
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 8.0),
                             Text(
                               truncateText(book.bookTitle),
                               style: TextStyle(
                                 color: AppColors.textPrimary,
-                                fontSize: 14,
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -175,7 +194,8 @@ class _BookListPageState extends State<BookListPage> {
                               truncateText(book.bookAuthor),
                               style: TextStyle(
                                 color: AppColors.textSecondary,
-                                fontSize: 12,
+                                fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -188,11 +208,11 @@ class _BookListPageState extends State<BookListPage> {
               ),
 
             // Saved Books Section
-            if (savedBooks.isNotEmpty)
+            if (recentBooks.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
-                  'Saved Books',
+                  'Book History',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -200,29 +220,35 @@ class _BookListPageState extends State<BookListPage> {
                   ),
                 ),
               ),
-            if (savedBooks.isNotEmpty)
+            if (recentBooks.isNotEmpty)
               ListView.builder(
-                reverse: true,
+                reverse: false,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: savedBooks.length,
+                itemCount: recentBooks.length,
                 itemBuilder: (context, index) {
-                  final book = savedBooks[index];
+                  final book = recentBooks[index];
                   return ListTile(
-                    leading: CachedNetworkImage(
-                      imageUrl: book.bookCover,
-                      cacheManager: CustomCacheManager(),
+                    leading: Container(
+                      height: 50,
                       width: 50,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                      Center(child: const CircularProgressIndicator(color: AppColors.buttonPrimary,)),
-                      errorWidget: (context, url, error) => Container(
-                        width: 50,
-                        height: 80,
-                        color: Colors.grey,
-                        child: const Icon(Icons.error),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundSecondary,
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(20),
+                        image: DecorationImage(
+                          fit: BoxFit.contain,
+                          image: NetworkImage(book.bookCover),
+                        ),
                       ),
+                      child: book.bookCover.isEmpty
+                          ? Text(
+                        '${book.bookTitle} Book Cover \n No Image Available',
+                        style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      )
+                          : null,
                     ),
                     title: Text(
                       truncateText(book.bookTitle),

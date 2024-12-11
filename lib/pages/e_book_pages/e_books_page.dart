@@ -1,12 +1,13 @@
 import 'dart:async'; // For Timer
+import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:appwrite/appwrite.dart'; // Appwrite SDK
+import 'package:idb_shim/idb_browser.dart';
 import '../../constants/app_write_constants.dart';
 import '../../style/colors.dart';
 import 'book_details_page.dart';
-import 'dart:math';
 
 class EBooksPage extends StatefulWidget {
   const EBooksPage({Key? key}) : super(key: key);
@@ -23,11 +24,13 @@ class _EBooksPageState extends State<EBooksPage> {
   String userId = '';
   final Client client = Client();
   late Databases databases;
-
-  Timer? _updateTimer;
+  late Database db;
   int offset = 0;
   bool hasMoreBooks = true;
   bool isFetchingMore = false;
+
+  // Timer for periodic fetch
+  Timer? fetchTimer;
 
   // Categorized books map
   Map<String, List<Map<String, dynamic>>> categorizedBooks = {
@@ -55,16 +58,50 @@ class _EBooksPageState extends State<EBooksPage> {
     super.initState();
     userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     initializeAppwrite();
+    openDatabase(); // Load cached books first
     fetchBooks();
-    _updateTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      fetchBooks(isLoadMore: true);
-    });
+
+    // Start the fetch timer
+    fetchTimer = Timer.periodic(const Duration(seconds: 5), (_) => fetchBooks());
   }
 
   @override
   void dispose() {
-    _updateTimer?.cancel();
+    // Cancel the timer when the widget is disposed
+    fetchTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> openDatabase() async {
+    db = await idbFactoryBrowser.open('ebooks_db', version: 1,
+        onUpgradeNeeded: (event) {
+          final db = event.database;
+          db.createObjectStore('books', keyPath: 'bookId');
+        });
+    await loadCachedBooks();
+  }
+
+  Future<void> loadCachedBooks() async {
+    final txn = db.transaction('books', 'readonly');
+    final store = txn.objectStore('books');
+    final cachedBooks = await store.getAll();
+
+    setState(() {
+      originalBooks.clear();
+      originalBooks.addAll(List<Map<String, dynamic>>.from(cachedBooks));
+      filteredBooks = applyFilter(searchQuery);
+      categorizeBooks();
+      isInitialLoading = false;
+    });
+  }
+
+  Future<void> cacheBooks(List<Map<String, dynamic>> books) async {
+    final txn = db.transaction('books', 'readwrite');
+    final store = txn.objectStore('books');
+
+    for (var book in books) {
+      await store.put(book);
+    }
   }
 
   void initializeAppwrite() {
@@ -75,16 +112,11 @@ class _EBooksPageState extends State<EBooksPage> {
     print('Appwrite Client Initialized');
   }
 
-  Future<void> fetchBooks({bool isLoadMore = false}) async {
-    if (isLoadMore && !hasMoreBooks) return;
-    if (isFetchingMore) return;
+  Future<void> fetchBooks() async {
+    if (!hasMoreBooks || isFetchingMore) return;
 
     setState(() {
-      if (isLoadMore) {
-        isFetchingMore = true;
-      } else {
-        isInitialLoading = true;
-      }
+      isFetchingMore = true;
     });
 
     try {
@@ -113,6 +145,7 @@ class _EBooksPageState extends State<EBooksPage> {
             originalBooks.add(book);
           }
         }
+        cacheBooks(originalBooks);
         filteredBooks = applyFilter(searchQuery);
         categorizeBooks();
         offset += fetchedBooks.length;
@@ -123,24 +156,20 @@ class _EBooksPageState extends State<EBooksPage> {
     } finally {
       setState(() {
         isFetchingMore = false;
-        isInitialLoading = false;
       });
     }
   }
 
   void categorizeBooks() {
-    // Clear the existing categories
     for (var category in categorizedBooks.keys) {
       categorizedBooks[category]?.clear();
     }
 
-    // Set to keep track of added books
     Set<String> addedBooks = {};
 
     for (var book in originalBooks) {
       for (var category in book['bookCategories']) {
         if (categorizedBooks.containsKey(category)) {
-          // Check if the book has already been added to this category
           if (!addedBooks.contains(book['bookId'])) {
             categorizedBooks[category]?.add(book);
             addedBooks.add(book['bookId']);
@@ -148,6 +177,10 @@ class _EBooksPageState extends State<EBooksPage> {
         }
       }
     }
+
+    categorizedBooks.forEach((key, value) {
+      value.shuffle(Random());
+    });
   }
 
   List<Map<String, dynamic>> applyFilter(String query) {
@@ -159,15 +192,6 @@ class _EBooksPageState extends State<EBooksPage> {
       final authors = (book['authorNames'] as String?)?.toLowerCase() ?? '';
       return title.contains(lowerQuery) || authors.contains(lowerQuery);
     }).toList();
-  }
-
-  void shuffleBooks() {
-    setState(() {
-      originalBooks.shuffle(Random());
-      filteredBooks = applyFilter(searchQuery);
-      categorizeBooks();
-    });
-    print('Books shuffled');
   }
 
   void filterBooks(String query) {
@@ -204,14 +228,7 @@ class _EBooksPageState extends State<EBooksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'Search',
-          style: TextStyle(color: AppColors.textHighlight),
-        ),
-      ),
+      backgroundColor: AppColors.backgroundPrimary,
       body: RefreshIndicator(
         onRefresh: fetchBooks,
         child: SingleChildScrollView(
@@ -235,7 +252,6 @@ class _EBooksPageState extends State<EBooksPage> {
                   ),
                 )
               else
-              // Display categorized books in a scrollable format
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -282,7 +298,8 @@ class _EBooksPageState extends State<EBooksPage> {
                                             width: 100,
                                             height: 150,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                                            errorBuilder: (context, error, stackTrace) =>
+                                            const Icon(Icons.error, color: Colors.red),
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
@@ -301,7 +318,6 @@ class _EBooksPageState extends State<EBooksPage> {
                                               color: Colors.grey,
                                             ),
                                           ),
-
                                         ],
                                       ),
                                     ),

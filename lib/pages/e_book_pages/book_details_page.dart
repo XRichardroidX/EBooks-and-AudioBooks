@@ -84,60 +84,63 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     userId = FirebaseAuth.instance.currentUser!.uid;
     getBookBody(widget.bookId);
     databases = Databases(client);
-    checkIfBookInList();
+    loadBooks();
   }
 
-  Future<void> checkIfBookInList() async {
-    // This method no longer needs shared preferences
+  List<Book> recentBooks = [];
+
+
+  // Save the book to recent reads
+  Future<void> addToRecentReads() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> recentBooks = prefs.getStringList('$userId+recentBooks') ?? [];
+
+    // Create a Book instance
+    Book currentBook = Book(
+      bookTitle: widget.bookTitle,
+      bookAuthor: widget.bookAuthor,
+      bookCover: widget.bookCover,
+      bookId: widget.bookId,
+    );
+
+    // Remove the book if it already exists to avoid duplicates
+    recentBooks.removeWhere((bookJson) {
+      Book book = Book.fromJson(bookJson);
+      return book.bookTitle == currentBook.bookTitle &&
+          book.bookAuthor == currentBook.bookAuthor;
+    });
+
+    // Insert the book at the beginning of the list
+    recentBooks.insert(0, currentBook.toJson());
+
+    // Optionally, limit the recent books to, say, 20
+    if (recentBooks.length > 20) {
+      recentBooks = recentBooks.sublist(0, 20);
+    }
+
+    await prefs.setStringList('$userId+recentBooks', recentBooks);
   }
 
-  Future<void> addToBookList(String bookBody, String summary, String categories) async {
-    // This method no longer uses shared preferences
-  }
+  // Load both recentBooks and savedBooks from SharedPreferences
+  Future<void> loadBooks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> recentBooksJson = prefs.getStringList('$userId+recentBooks') ?? [];
 
-  Future<void> removeFromBookList() async {
-    // This method no longer uses shared preferences
-  }
+    List<Book> loadedRecentBooks =
+    recentBooksJson.map((bookJson) => Book.fromJson(bookJson)).toList();
 
+    setState(() {
+      recentBooks = loadedRecentBooks;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
-        leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios)),
-        actions: [
-          InkWell(
-            onTap: () {
-              if (isBookInList) {
-                removeFromBookList();
-              } else {
-                addToBookList(ebookBody!, bookSummary!, bookCategories!);
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(
-                isBookInList ? Icons.restore_from_trash_outlined : Icons.arrow_downward,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BookListPage(),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(Icons.list),
-            ),
-          ),
-        ],
+        leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios),
+        ),
       ),
       body: Container(
         color: AppColors.backgroundSecondary,
@@ -177,8 +180,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           fit: BoxFit.contain,
                           image: NetworkImage(widget.bookCover),
                         ),
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
+                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: widget.bookCover.isEmpty
                           ? Text(
@@ -227,16 +229,56 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               const SizedBox(height: 10),
               InkWell(
                 onTap: () async {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookReader(
-                        bookTitle: widget.bookTitle,
-                        bookAuthor: widget.bookAuthor,
-                        bookBody: ebookBody ?? 'No Book Content Found',
-                      ),
-                    ),
-                  );
+                  // Retrieve the subscription end timestamp from SharedPreferences
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  String? endSubString = prefs.getString('$userId+endSub');
+
+                  try {
+
+                    if (endSubString != null) {
+                      // Convert the endSub string back to a DateTime object
+                      DateTime endSubDate = DateTime.parse(endSubString);
+                      DateTime currentTime = DateTime.now();
+
+                      // Check if the current time exceeds the subscription end time
+                      if (currentTime.isAfter(endSubDate)) {
+                        // Subscription has expired, navigate to the subscription page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SubscriptionPage(), // Navigate to your subscription page
+                          ),
+                        );
+                      } else {
+                        // Subscription is active, open the book reader
+
+                        // Navigate to the BookReader and wait for it to complete
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookReader(
+                              bookTitle: widget.bookTitle,
+                              bookAuthor: widget.bookAuthor,
+                              bookBody: ebookBody ?? 'No Book Content Found'!,
+                            ),
+                          ),
+                        );
+                        await addToRecentReads();
+
+                      }
+                    } else {
+                      // Handle case where endSub is not found in SharedPreferences (e.g., prompt subscription)
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SubscriptionPage(), // Navigate to your subscription page
+                        ),
+                      );
+                    }
+                  } catch (error) {
+                    showCustomSnackbar(context, '$error', '$error', Colors.black);
+                    print(error);
+                  }
                 },
                 child: loading
                     ? CircularProgressIndicator(color: AppColors.iconColor)
