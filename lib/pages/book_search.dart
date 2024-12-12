@@ -37,7 +37,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
     userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     initializeAppwrite();
     loadBooksFromLocalStorage();
-    _updateTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _updateTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       fetchBooks(isLoadMore: true);
       shuffleBooks();
     });
@@ -185,21 +185,26 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  onChanged: (query) => filterBooks(query),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Search by Title or Author',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.grey[800],
-                    border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                      borderSide: BorderSide.none,
+              Center(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: 500
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    onChanged: (query) => filterBooks(query),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search by Title or Author',
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: Colors.grey[800],
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white),
                     ),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white),
                   ),
                 ),
               ),

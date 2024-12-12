@@ -106,11 +106,10 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     Screen.initialize(context);
     return Scaffold(
+      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
-        iconTheme: IconThemeData(
-          color: AppColors.textPrimary
-        ),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
         leading: IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_back_ios)),
         actions: [
           IconButton(onPressed: context.pop, icon: Icon(Icons.arrow_forward_ios)),
@@ -122,124 +121,120 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-      body: Container(
-        color: AppColors.backgroundPrimary,
-        height: Screen.height,
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.sizeOf(context).height * 0.2,
-                    ),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          // Email input field
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            style: const TextStyle(color: AppColors.textPrimary),
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              labelStyle: TextStyle(color: AppColors.textHighlight),
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20.0),
-
-                          // Password input field with show/hide toggle
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: !_isPasswordVisible, // Toggle visibility
-                            style: const TextStyle(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              labelStyle: const TextStyle(color: AppColors.textHighlight),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 600, // Limit the maximum width
+            minWidth: 300, // Ensure a minimum width
+          ),
+          child: Container(
+            color: AppColors.backgroundPrimary,
+            height: Screen.height,
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.sizeOf(context).height * 0.2,
+                        ),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                style: const TextStyle(color: AppColors.textPrimary),
+                                decoration: const InputDecoration(
+                                  labelText: 'Email',
+                                  labelStyle: TextStyle(color: AppColors.textHighlight),
+                                  border: OutlineInputBorder(),
                                 ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your email';
+                                  }
+                                  return null;
                                 },
                               ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15.0),
-                          InkWell(
-                            onTap: (){
-                              context.push('/forgotpassword');
-                            },
-                            child: Container(
-                              alignment: Alignment.topRight,
-                              child: Text(
-                                  'Forgot password?',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.textHighlight
+                              const SizedBox(height: 20.0),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: !_isPasswordVisible,
+                                style: const TextStyle(color: AppColors.textPrimary),
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                  labelStyle: const TextStyle(color: AppColors.textHighlight),
+                                  border: const OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isPasswordVisible = !_isPasswordVisible;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your password';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 15.0),
+                              InkWell(
+                                onTap: () {
+                                  context.push('/forgotpassword');
+                                },
+                                child: Container(
+                                  alignment: Alignment.topRight,
+                                  child: Text(
+                                    'Forgot password?',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.textHighlight,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 20.0),
-
-                          // Login button
-                          ElevatedButton(
-                            onPressed: () => _loginWithEmailPassword(context),
-                            child: const Text(
-                              '         LOGIN          ',
-                              style: TextStyle(
-                                fontSize: 16,
-                                  color: AppColors.backgroundPrimary
+                              const SizedBox(height: 20.0),
+                              ElevatedButton(
+                                onPressed: () => _loginWithEmailPassword(context),
+                                child: const Text(
+                                  '         LOGIN          ',
+                                  style: TextStyle(fontSize: 16, color: AppColors.backgroundPrimary),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.push('/signup');
+                          },
+                          child: const Text(
+                            'CREATE ACCOUNT',
+                            style: TextStyle(color: AppColors.textHighlight),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20.0),
-
-                    // Button to navigate to signup page
-                    ElevatedButton(
-                      onPressed: () {
-                        context.push('/signup'); // Navigate to the signup page
-                      },
-                      child: const Text(
-                        'CREATE ACCOUNT',
-                        style: TextStyle(color: AppColors.textHighlight),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                if (isLoading)
+                  const Center(
+                    child: CircularProgressIndicator(color: AppColors.buttonPrimary),
+                  ),
+              ],
             ),
-
-            // Loading indicator
-            if (isLoading)
-              const Center(
-                child: CircularProgressIndicator(color: AppColors.buttonPrimary,),
-              ),
-          ],
+          ),
         ),
       ),
     );

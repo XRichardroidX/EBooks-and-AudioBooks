@@ -53,31 +53,31 @@ class _EBooksPageState extends State<EBooksPage> {
     'Crime': [],
   };
 
+  final int bookFetchLimit = 9999;
+  final int booksPerFetch = 5;
+  final int categoryDisplayLimit = 5000;
+
   @override
   void initState() {
     super.initState();
     userId = FirebaseAuth.instance.currentUser?.uid ?? '123456789';
     initializeAppwrite();
-    openDatabase(); // Load cached books first
+    openDatabase();
     fetchBooks();
-
-    // Start the fetch timer
-    fetchTimer = Timer.periodic(const Duration(seconds: 5), (_) => fetchBooks());
+    fetchTimer = Timer.periodic(const Duration(seconds: 3), (_) => fetchBooks());
   }
 
   @override
   void dispose() {
-    // Cancel the timer when the widget is disposed
     fetchTimer?.cancel();
     super.dispose();
   }
 
   Future<void> openDatabase() async {
-    db = await idbFactoryBrowser.open('ebooks_db', version: 1,
-        onUpgradeNeeded: (event) {
-          final db = event.database;
-          db.createObjectStore('books', keyPath: 'bookId');
-        });
+    db = await idbFactoryBrowser.open('ebooks_db', version: 1, onUpgradeNeeded: (event) {
+      final db = event.database;
+      db.createObjectStore('books', keyPath: 'bookId');
+    });
     await loadCachedBooks();
   }
 
@@ -124,7 +124,7 @@ class _EBooksPageState extends State<EBooksPage> {
         databaseId: Constants.databaseId,
         collectionId: Constants.ebooksCollectionId,
         queries: [
-          Query.limit(5),
+          Query.limit(booksPerFetch),
           Query.offset(offset),
         ],
       );
@@ -149,10 +149,10 @@ class _EBooksPageState extends State<EBooksPage> {
         filteredBooks = applyFilter(searchQuery);
         categorizeBooks();
         offset += fetchedBooks.length;
-        hasMoreBooks = fetchedBooks.isNotEmpty;
+        hasMoreBooks = fetchedBooks.length == booksPerFetch;
       });
     } catch (e) {
-      print('Error fetching books: $e');
+      print('Error fetching books: \$e');
     } finally {
       setState(() {
         isFetchingMore = false;
@@ -165,14 +165,11 @@ class _EBooksPageState extends State<EBooksPage> {
       categorizedBooks[category]?.clear();
     }
 
-    Set<String> addedBooks = {};
-
     for (var book in originalBooks) {
       for (var category in book['bookCategories']) {
         if (categorizedBooks.containsKey(category)) {
-          if (!addedBooks.contains(book['bookId'])) {
+          if (!categorizedBooks[category]!.any((existingBook) => existingBook['bookId'] == book['bookId'])) {
             categorizedBooks[category]?.add(book);
-            addedBooks.add(book['bookId']);
           }
         }
       }
@@ -180,6 +177,9 @@ class _EBooksPageState extends State<EBooksPage> {
 
     categorizedBooks.forEach((key, value) {
       value.shuffle(Random());
+      if (value.length > categoryDisplayLimit) {
+        categorizedBooks[key] = value.sublist(0, categoryDisplayLimit);
+      }
     });
   }
 
@@ -194,7 +194,8 @@ class _EBooksPageState extends State<EBooksPage> {
     }).toList();
   }
 
-  void filterBooks(String query) {
+
+void filterBooks(String query) {
     setState(() {
       searchQuery = query;
       filteredBooks = applyFilter(searchQuery);

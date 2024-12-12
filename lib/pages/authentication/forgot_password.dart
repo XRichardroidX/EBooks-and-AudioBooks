@@ -15,9 +15,15 @@ class ForgotPass extends StatefulWidget {
 TextEditingController emailController = TextEditingController();
 
 class _ForgotPassState extends State<ForgotPass> {
-
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Define constraints
+    const maxWidth = 400.0; // Maximum width for the content
+    const maxHeight = 600.0; // Maximum height for the content
+
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
@@ -34,84 +40,92 @@ class _ForgotPassState extends State<ForgotPass> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-            child: Column(
-              children: [
-                const Text(
-                  'Forgot Password?',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                const Text(
-                  'Please enter the email address associated with your account',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  height: 45,
-                  child: TextFormField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      labelText: 'Email Address',
-                      labelStyle: const TextStyle(color: AppColors.textSecondary),
-                      filled: true,
-                      fillColor: AppColors.cardBackground,
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.textHighlight),
-                        borderRadius: BorderRadius.circular(12),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxWidth,
+              maxHeight: screenHeight < maxHeight ? screenHeight : maxHeight,
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 2, 20, 15),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w600,
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.dividerColor),
-                        borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(height: 30),
+                    const Text(
+                      'Please enter the email address associated with your account',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
                     ),
-                  ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      height: 45,
+                      child: TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          labelText: 'Email Address',
+                          labelStyle: const TextStyle(color: AppColors.textSecondary),
+                          filled: true,
+                          fillColor: AppColors.cardBackground,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: AppColors.textHighlight),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: AppColors.dividerColor),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (emailController.text.isNotEmpty) {
+                          resetPassword(
+                            context: context,
+                            email: emailController.text,
+                          );
+                          emailController.clear();
+                        } else {
+                          showCustomSnackbar(context, 'Warning!!', "Email field is empty", AppColors.warning);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        backgroundColor: AppColors.buttonPrimary,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      child: const Text(
+                        "RESET PASSWORD",
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () {
-                    if (emailController.text.isNotEmpty) {
-                      resetPassword(
-                        context: context,
-                        email: emailController.text,
-                      );
-                      emailController.clear();
-                    } else {
-                      showCustomSnackbar(context, 'Warning!!', "Email field is empty", AppColors.warning);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    backgroundColor: AppColors.buttonPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  child: const Text(
-                    "RESET PASSWORD",
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

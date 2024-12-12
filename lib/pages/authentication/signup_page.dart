@@ -212,119 +212,134 @@ class _SignupPageState extends State<SignupPage> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.sizeOf(context).height * 0.2,
-                    ),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          // Username input
-                          TextFormField(
-                            controller: _usernameController,
-                            style: const TextStyle(color: AppColors.textPrimary),
-                            decoration: const InputDecoration(
-                              labelText: 'Username',
-                              labelStyle: TextStyle(color: AppColors.textHighlight),
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your username';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20.0),
-                          // Email input
-                          TextFormField(
-                            controller: _emailController,
-                            style: const TextStyle(color: AppColors.textPrimary),
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              labelStyle: TextStyle(color: AppColors.textHighlight),
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: _emailValidator,
-                          ),
-                          const SizedBox(height: 20.0),
-                          // Password input
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: !_isPasswordVisible,
-                            style: const TextStyle(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              labelStyle: const TextStyle(color: AppColors.textHighlight),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _isPasswordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20.0),
-                          // Confirm password input
-                          TextFormField(
-                            controller: _confirmPasswordController,
-                            obscureText: !_isConfirmPasswordVisible,
-                            style: const TextStyle(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              labelText: 'Confirm Password',
-                              labelStyle: const TextStyle(color: AppColors.textHighlight),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _isConfirmPasswordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                                  });
-                                },
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value != _passwordController.text) {
-                                return 'Passwords do not match';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20.0),
-                          // Signup button
-                          ElevatedButton(
-                            onPressed: () => _signup(context),
-                            child: const Text(
-                              '      SIGN UP      ',
-                              style: TextStyle(color: AppColors.backgroundPrimary),
-                            ),
-                          ),
-                        ],
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.2,
                       ),
-                    ),
-                  ],
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            // Username input
+                            SizedBox(
+                              width: 400, // Adjust the width as per your requirement
+                              child: TextFormField(
+                                controller: _usernameController,
+                                style: const TextStyle(color: AppColors.textPrimary),
+                                decoration: const InputDecoration(
+                                  labelText: 'Username',
+                                  labelStyle: TextStyle(color: AppColors.textHighlight),
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your username';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+
+                            // Email input
+                            SizedBox(
+                              width: 400, // Same width constraint applied
+                              child: TextFormField(
+                                controller: _emailController,
+                                style: const TextStyle(color: AppColors.textPrimary),
+                                keyboardType: TextInputType.emailAddress,
+                                decoration: const InputDecoration(
+                                  labelText: 'Email',
+                                  labelStyle: TextStyle(color: AppColors.textHighlight),
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: _emailValidator,
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+
+                            // Password input
+                            SizedBox(
+                              width: 400,
+                              child: TextFormField(
+                                controller: _passwordController,
+                                obscureText: !_isPasswordVisible,
+                                style: const TextStyle(color: AppColors.textPrimary),
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                  labelStyle: const TextStyle(color: AppColors.textHighlight),
+                                  border: const OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isPasswordVisible = !_isPasswordVisible;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your password';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+
+                            // Confirm password input
+                            SizedBox(
+                              width: 400,
+                              child: TextFormField(
+                                controller: _confirmPasswordController,
+                                obscureText: !_isConfirmPasswordVisible,
+                                style: const TextStyle(color: AppColors.textPrimary),
+                                decoration: InputDecoration(
+                                  labelText: 'Confirm Password',
+                                  labelStyle: const TextStyle(color: AppColors.textHighlight),
+                                  border: const OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value != _passwordController.text) {
+                                    return 'Passwords do not match';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+
+                            // Signup button
+                            ElevatedButton(
+                              onPressed: () => _signup(context),
+                              child: const Text(
+                                '      SIGN UP      ',
+                                style: TextStyle(color: AppColors.backgroundPrimary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

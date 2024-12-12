@@ -91,7 +91,7 @@ class _MenuScreensState extends State<MenuScreens> {
     if (mounted) {
       await Future.delayed(Duration(seconds: 2));
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => UpdatePromptPage()),
+        MaterialPageRoute(builder: (context) => EBooksPage()),
       );
     }
   }
@@ -105,44 +105,63 @@ class _MenuScreensState extends State<MenuScreens> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: _pages.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Top Stories Worldwide in one place', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
-          backgroundColor: AppColors.backgroundSecondary,
-          bottom: TabBar(
-            indicatorColor: AppColors.textHighlight,
-            onTap: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            tabs: [
-              Tab(
-                icon: Icon(Icons.menu_book_sharp, color: AppColors.iconColor),
-                child: Text('Home', style: TextStyle(color: AppColors.textPrimary)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        final maxHeight = constraints.maxHeight;
+
+        // Limit the screen size
+        final double limitedWidth = maxWidth > 1200 ? 1200 : maxWidth;
+        final double limitedHeight = maxHeight > 1200 ? 1200 : maxHeight;
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: limitedWidth,
+              maxHeight: limitedHeight,
+            ),
+            child: DefaultTabController(
+              length: _pages.length,
+              child: Scaffold(
+                appBar: AppBar(
+                  toolbarHeight: 12,
+                  backgroundColor: AppColors.backgroundSecondary,
+                  bottom: TabBar(
+                    indicatorColor: AppColors.textHighlight,
+                    onTap: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    tabs: [
+                      Tab(
+                        icon: Icon(Icons.menu_book_sharp, color: AppColors.iconColor),
+                        child: Text('E-Books', style: TextStyle(color: AppColors.textPrimary)),
+                      ),
+                      Tab(
+                        icon: Icon(Icons.search, color: AppColors.iconColor),
+                        child: Text('Search', style: TextStyle(color: AppColors.textPrimary)),
+                      ),
+                      Tab(
+                        icon: Icon(Icons.bookmark, color: AppColors.iconColor),
+                        child: Text('Bookmarks', style: TextStyle(color: AppColors.textPrimary)),
+                      ),
+                      Tab(
+                        icon: Icon(Icons.settings, color: AppColors.iconColor),
+                        child: Text('Settings', style: TextStyle(color: AppColors.textPrimary)),
+                      ),
+                    ],
+                  ),
+                ),
+                body: AppwriteAppVersion == appVersion
+                    ? TabBarView(children: _pages)
+                    : EBooksPage(),
+                backgroundColor: AppColors.backgroundPrimary,
               ),
-              Tab(
-                icon: Icon(Icons.search, color: AppColors.iconColor),
-                child: Text('Search', style: TextStyle(color: AppColors.textPrimary)),
-              ),
-              Tab(
-                icon: Icon(Icons.auto_stories, color: AppColors.iconColor),
-                child: Text('History', style: TextStyle(color: AppColors.textPrimary)),
-              ),
-              Tab(
-                icon: Icon(Icons.person, color: AppColors.iconColor),
-                child: Text('Profile', style: TextStyle(color: AppColors.textPrimary)),
-              ),
-            ],
+            ),
           ),
-        ),
-        body: AppwriteAppVersion == appVersion
-            ? TabBarView(children: _pages)
-            : UpdatePromptPage(),
-        backgroundColor: AppColors.backgroundPrimary,
-      ),
+        );
+      },
     );
   }
 }

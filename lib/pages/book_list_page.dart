@@ -119,7 +119,7 @@ class _BookListPageState extends State<BookListPage> {
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.5, // Adjust the height of the horizontal list
                 child: ListView.builder(
-                  scrollDirection: Axis.horizontal, // Horizontal scrolling
+                  scrollDirection: Axis.vertical, // Horizontal scrolling
                   itemCount: 1, // Limit to a maximum of 10 books
                   itemBuilder: (context, index) {
                     final book = recentBooks[index];
@@ -141,7 +141,11 @@ class _BookListPageState extends State<BookListPage> {
                               children: [
                                 Container(
                                   width: MediaQuery.of(context).size.width,
-                                  height: MediaQuery.of(context).size.height * 0.4,
+                                  height: MediaQuery.of(context).size.height * 0.35,
+                                  constraints: BoxConstraints(
+                                    maxHeight: 1000,
+                                    maxWidth: 1000,
+                                  ),
                                   decoration: BoxDecoration(
                                     border: Border.all(color: Colors.grey),
                                     borderRadius: BorderRadius.circular(20),
