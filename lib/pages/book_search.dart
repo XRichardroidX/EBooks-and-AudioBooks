@@ -55,7 +55,7 @@ class _FilterBooksPageState extends State<FilterBooksPage> {
     });
 
     // Periodically fetch updates after initial loading
-    _updateTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
+    _updateTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       fetchBooks(isLoadMore: true);
     });
   }

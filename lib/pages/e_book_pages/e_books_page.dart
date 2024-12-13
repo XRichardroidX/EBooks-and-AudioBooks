@@ -69,7 +69,7 @@ class _EBooksPageState extends State<EBooksPage> {
     final lastFetchTime = prefs.getInt('$userId+lastFetchTime') ?? 0;
     final currentTime = DateTime.now().millisecondsSinceEpoch;
 
-    if (currentTime - lastFetchTime > Duration(seconds: 120).inMilliseconds) {
+    if (currentTime - lastFetchTime > Duration(seconds: 3).inMilliseconds) {
       await fetchBooks();
       await prefs.setInt('$userId+lastFetchTime', currentTime);
     }
