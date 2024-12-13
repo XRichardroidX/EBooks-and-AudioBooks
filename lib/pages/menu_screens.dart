@@ -91,7 +91,7 @@ class _MenuScreensState extends State<MenuScreens> {
     if (mounted) {
       await Future.delayed(Duration(seconds: 2));
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => EBooksPage()),
+        MaterialPageRoute(builder: (context) => UpdatePromptPage()),
       );
     }
   }
@@ -144,7 +144,7 @@ class _MenuScreensState extends State<MenuScreens> {
                       ),
                       Tab(
                         icon: Icon(Icons.bookmark, color: AppColors.iconColor),
-                        child: Text('Bookmarks', style: TextStyle(color: AppColors.textPrimary)),
+                        child: Text('Return', style: TextStyle(color: AppColors.textPrimary)),
                       ),
                       Tab(
                         icon: Icon(Icons.settings, color: AppColors.iconColor),
@@ -155,7 +155,7 @@ class _MenuScreensState extends State<MenuScreens> {
                 ),
                 body: AppwriteAppVersion == appVersion
                     ? TabBarView(children: _pages)
-                    : EBooksPage(),
+                    : UpdatePromptPage(),
                 backgroundColor: AppColors.backgroundPrimary,
               ),
             ),

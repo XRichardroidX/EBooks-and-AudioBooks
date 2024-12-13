@@ -312,8 +312,8 @@ class _BookReaderState extends State<BookReader> {
           child: Center(
             child: Container(
               constraints: BoxConstraints(
-                maxHeight: 600,
-                maxWidth: 600,
+                maxWidth: 600, // Limit the maximum width
+                minWidth: 300, // Ensure a minimum width
               ),
               color: _isDarkMode ? Color(0xFF171615) : Color(0xFFFAF5EF),
               padding: _fontSize >= 19 ? EdgeInsets.symmetric(horizontal: 15.0, vertical: 0) : (readMode ? EdgeInsets.fromLTRB(20, 0, 20, 0) : EdgeInsets.fromLTRB(20, 0, 20, 0)),

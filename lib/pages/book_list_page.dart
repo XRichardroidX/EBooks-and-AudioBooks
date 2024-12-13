@@ -141,7 +141,7 @@ class _BookListPageState extends State<BookListPage> {
                               children: [
                                 Container(
                                   width: MediaQuery.of(context).size.width,
-                                  height: MediaQuery.of(context).size.height * 0.35,
+                                  height: MediaQuery.of(context).size.height * 0.40,
                                   constraints: BoxConstraints(
                                     maxHeight: 1000,
                                     maxWidth: 1000,
@@ -155,7 +155,7 @@ class _BookListPageState extends State<BookListPage> {
                                     ),
                                   ),
                                   child: BackdropFilter(
-                                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                    filter: ImageFilter.blur(sigmaX: 50, sigmaY: 5),
                                     child: Container(
                                       color: Colors.black.withOpacity(0.6),
                                     ),
@@ -166,9 +166,6 @@ class _BookListPageState extends State<BookListPage> {
                                   width: MediaQuery.of(context).size.width * 0.3,
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: AppColors.backgroundSecondary,
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(20),
                                     image: DecorationImage(
                                       fit: BoxFit.contain,
                                       image: NetworkImage(book.bookCover),

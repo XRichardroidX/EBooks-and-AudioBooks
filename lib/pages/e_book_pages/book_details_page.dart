@@ -145,13 +145,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       ),
       body: Center(
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 50, vertical: 50),
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           color: AppColors.backgroundSecondary,
           width: MediaQuery.of(context).size.width,
           height: double.infinity,
           constraints: BoxConstraints(
-            maxHeight: 1000,
-            maxWidth: 1000,
+            maxWidth: 600, // Limit the maximum width
+            minWidth: 300, // Ensure a minimum width
           ),
           child: (loading || ebookBody == null || bookSummary == null || bookCategories == null)
               ? Center(child: CircularProgressIndicator(color: AppColors.textHighlight))
