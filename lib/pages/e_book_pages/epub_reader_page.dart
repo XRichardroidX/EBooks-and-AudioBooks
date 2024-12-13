@@ -330,6 +330,7 @@ class _BookReaderState extends State<BookReader> {
                           wordSpacing: 2,
                           color: _isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF494848),
                         ),
+                        textAlign: TextAlign.center, // Aligns the text to the center
                       ),
                     ),
                   ),

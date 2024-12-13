@@ -244,7 +244,7 @@ void filterBooks(String query) {
                   padding: EdgeInsets.all(16.0),
                   child: Center(
                     child: Text(
-                      "No books found.",
+                      "Loading Books.",
                       style: TextStyle(
                         fontSize: 16,
                         color: AppColors.textSecondary,
