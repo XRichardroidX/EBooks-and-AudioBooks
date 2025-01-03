@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novel_world/pages/authentication/login_page.dart';
-import 'package:novel_world/style/colors.dart';
-import 'package:novel_world/widget/snack_bar_message.dart';
+import 'package:novelcity/pages/authentication/login_page.dart';
+import 'package:novelcity/style/colors.dart';
+import 'package:novelcity/widget/snack_bar_message.dart';
 
 class ForgotPass extends StatefulWidget {
   const ForgotPass({super.key});

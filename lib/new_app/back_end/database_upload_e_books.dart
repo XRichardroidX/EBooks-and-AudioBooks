@@ -1,4 +1,4 @@
-import 'package:novel_world/pages/menu_screens.dart';
+import 'package:novelcity/pages/menu_screens.dart';
 import 'dart:typed_data';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';

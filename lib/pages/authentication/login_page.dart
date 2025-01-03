@@ -1,7 +1,7 @@
 import 'package:appwrite/appwrite.dart';
-import 'package:novel_world/pages/authentication/forgot_password.dart';
-import 'package:novel_world/style/colors.dart';
-import 'package:novel_world/widget/snack_bar_message.dart';
+import 'package:novelcity/pages/authentication/forgot_password.dart';
+import 'package:novelcity/style/colors.dart';
+import 'package:novelcity/widget/snack_bar_message.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -1,6 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as models;
-import 'package:novel_world/constants/app_write_constants.dart';
+import 'package:novelcity/constants/app_write_constants.dart';
 
 Future<bool> checkUserLoggedIn() async {
   try {

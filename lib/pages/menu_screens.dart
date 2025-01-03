@@ -1,9 +1,9 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:novel_world/pages/book_search.dart';
-import 'package:novel_world/pages/book_list_page.dart';
-import 'package:novel_world/pages/settings_option/settings_page.dart';
-import 'package:novel_world/pages/update_app_page.dart';
-import 'package:novel_world/style/colors.dart';
+import 'package:novelcity/pages/book_search.dart';
+import 'package:novelcity/pages/book_list_page.dart';
+import 'package:novelcity/pages/settings_option/settings_page.dart';
+import 'package:novelcity/pages/update_app_page.dart';
+import 'package:novelcity/style/colors.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_write_constants.dart';
 import 'e_book_pages/e_books_page.dart';

@@ -1,6 +1,6 @@
 import 'dart:math';
-import 'package:novel_world/style/colors.dart';
-import 'package:novel_world/widget/snack_bar_message.dart';
+import 'package:novelcity/style/colors.dart';
+import 'package:novelcity/widget/snack_bar_message.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase Authentication

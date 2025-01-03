@@ -1,6 +1,6 @@
-# novel_world
+# novelcity
 
-A new Flutter project.
+A Novel City Stories Platform
 
 ## Getting Started
 

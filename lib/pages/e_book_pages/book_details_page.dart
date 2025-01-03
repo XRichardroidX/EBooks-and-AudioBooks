@@ -4,9 +4,10 @@ import 'package:appwrite/appwrite.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novel_world/style/colors.dart';
+import 'package:novelcity/pages/e_book_pages/demo_reader_page.dart';
+import 'package:novelcity/style/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:novel_world/widget/snack_bar_message.dart';
+import 'package:novelcity/widget/snack_bar_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_write_constants.dart';
 import '../../widget/book.dart';
@@ -491,9 +492,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SubscriptionPage(), // Navigate to your subscription page
+                            builder: (context) => DemoBookReader(
+                              bookTitle: widget.bookTitle,
+                              bookAuthor: widget.bookAuthor,
+                              bookBody: ebookBody ?? 'No Book Content Found'!,
+                            ),
                           ),
                         );
+                        await addToRecentReads();
                       } else {
                         // Subscription is active, open the book reader
 

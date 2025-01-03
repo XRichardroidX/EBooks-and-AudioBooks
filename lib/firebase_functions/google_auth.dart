@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/enums.dart';
 import 'package:flutter/cupertino.dart';

@@ -1,7 +1,7 @@
 import 'package:appwrite/models.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:novel_world/style/colors.dart';
+import 'package:novelcity/style/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:go_router/go_router.dart';
@@ -27,21 +27,21 @@ class _EBooksPageState extends State<EBooksPage> {
   late Databases databases;
 
   Map<String, List<Map<String, dynamic>>> categorizedBooks = {
-    "Nigerian Stories": [],
-    "African Tales": [],
-    "Nigerian Romance": [],
     'Mystery': [],
+    'Horror': [],
     'Romance': [],
     'Thriller': [],
     'Adventure': [],
     'Science Fiction': [],
     'Fantasy': [],
-    'Historical Fiction': [],
-    'Horror': [],
-    'Young Adult (YA)': [],
-    'Comedy': [],
+    "Nigerian Stories": [],
+    "African Tales": [],
+    "Nigerian Romance": [],
     'Masculinity': [],
     'Femininity': [],
+    'Historical Fiction': [],
+    'Young Adult (YA)': [],
+    'Comedy': [],
     'Dystopian/Post-Apocalyptic': [],
     'Crime': [],
   };
@@ -358,7 +358,7 @@ class _EBooksPageState extends State<EBooksPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 // Recent Books Section
                 if (recentBooks.isNotEmpty)
                   Padding(
@@ -373,7 +373,80 @@ class _EBooksPageState extends State<EBooksPage> {
                     ),
                   ),
                 // Recent Books Horizontal List
-                if (recentBooks.isNotEmpty)
+                if (recentBooks.isNotEmpty && recentBooks.length > 0 && recentBooks.length < 2 )
+                  Center(
+                    child: SizedBox(
+                      height: 380, // Adjust the height of the horizontal list
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal, // Horizontal scrolling
+                        itemCount:
+                        recentBooks.length > 10 ? 10 : recentBooks.length, // Limit to a maximum of 10 books
+                        itemBuilder: (context, index) {
+                          final book = recentBooks[index];
+                          return GestureDetector(
+                            onTap: () => navigateToBookDetails(book),
+                            child: Container(
+                              width: 250, // Width of each book item
+                              margin: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.18),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                color: AppColors.cardBackground,
+                                border: Border.all(color: AppColors.textPrimary),
+                              ),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: CachedNetworkImage(
+                                      imageUrl: book.bookCover,
+                                      imageBuilder: (context, imageProvider) => Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(10),
+                                          image: DecorationImage(
+                                            image: imageProvider,
+                                            fit: BoxFit.fill,
+                                          ),
+                                        ),
+                                      ),
+                                      placeholder: (context, url) =>
+                                      const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary,)),
+                                      errorWidget: (context, url, error) =>
+                                      const Icon(Icons.error),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          truncateText(book.bookTitle),
+                                          style: const TextStyle(
+                                            fontSize: 17,
+                                            color: AppColors.textPrimary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          truncateText(book.bookAuthor),
+                                          style: const TextStyle(
+                                              fontSize: 15,
+                                              color: AppColors.textSecondary),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                if(recentBooks.isNotEmpty && recentBooks.length >= 2)
                   SizedBox(
                     height: 300, // Adjust the height of the horizontal list
                     child: ListView.builder(
@@ -385,8 +458,8 @@ class _EBooksPageState extends State<EBooksPage> {
                         return GestureDetector(
                           onTap: () => navigateToBookDetails(book),
                           child: Container(
-                            width: 160, // Width of each book item
-                            margin: const EdgeInsets.only(right: 8.0),
+                            width: 180, // Width of each book item
+                            margin: const EdgeInsets.only(left: 10.0),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
                               color: AppColors.cardBackground,
@@ -402,7 +475,7 @@ class _EBooksPageState extends State<EBooksPage> {
                                         borderRadius: BorderRadius.circular(10),
                                         image: DecorationImage(
                                           image: imageProvider,
-                                          fit: BoxFit.cover,
+                                          fit: BoxFit.fill,
                                         ),
                                       ),
                                     ),
