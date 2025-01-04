@@ -228,7 +228,7 @@ class SubscriptionPage extends StatelessWidget {
             ),
           ),
           content: const Text(
-            'Please do not change the email and replace it with a different one, it is linked with your account, reach out to us if you have any questions.',
+            "We'll use your current email, Tap Continue.",
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,

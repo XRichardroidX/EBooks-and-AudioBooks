@@ -286,66 +286,66 @@ class _EBooksPageState extends State<EBooksPage> {
         appBar: AppBar(
           backgroundColor: AppColors.backgroundPrimary,
           title: const Text(
-            'Categories',
+            'Novel City',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 24,
                 color: AppColors.textHighlight,
               fontWeight: FontWeight.bold,
             ),
           ),
           actions: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    // Fetch version from Appwrite
-                    String latestVersion = await _fetchAppVersionFromAppwrite();
-
-                    // Check if the app version matches 'v1'
-                    if (latestVersion == 'yes') {
-                      // If version matches, navigate to UploadEBooksPage
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const UploadEBooksPage(),
-                        ),
-                      );
-                    } else {
-                      // If version doesn't match, navigate to SorryUploadBlockedPage
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SorryUploadBlockedPage(),
-                        ),
-                      );
-                    }
-                  },
-                  style: ButtonStyle(
-                    shape: MaterialStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    side: MaterialStateProperty.all(
-                      BorderSide(color: AppColors.buttonPrimary, width: 2),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.add,
-                    size: 28,
-                    color: AppColors.textPrimary,
-                  ),
-                  label: const Text(
-                    'Upload E-Books',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: Center(
+            //     child: OutlinedButton.icon(
+            //       onPressed: () async {
+            //         // Fetch version from Appwrite
+            //         String latestVersion = await _fetchAppVersionFromAppwrite();
+            //
+            //         // Check if the app version matches 'v1'
+            //         if (latestVersion == 'yes') {
+            //           // If version matches, navigate to UploadEBooksPage
+            //           Navigator.push(
+            //             context,
+            //             MaterialPageRoute(
+            //               builder: (context) => const UploadEBooksPage(),
+            //             ),
+            //           );
+            //         } else {
+            //           // If version doesn't match, navigate to SorryUploadBlockedPage
+            //           Navigator.push(
+            //             context,
+            //             MaterialPageRoute(
+            //               builder: (context) => const SorryUploadBlockedPage(),
+            //             ),
+            //           );
+            //         }
+            //       },
+            //       style: ButtonStyle(
+            //         shape: MaterialStateProperty.all(
+            //           RoundedRectangleBorder(
+            //             borderRadius: BorderRadius.circular(20),
+            //           ),
+            //         ),
+            //         side: MaterialStateProperty.all(
+            //           BorderSide(color: AppColors.buttonPrimary, width: 2),
+            //         ),
+            //       ),
+            //       icon: const Icon(
+            //         Icons.add,
+            //         size: 28,
+            //         color: AppColors.textPrimary,
+            //       ),
+            //       label: const Text(
+            //         'Upload E-Books',
+            //         style: TextStyle(
+            //           fontSize: 18,
+            //           color: AppColors.textPrimary,
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
 

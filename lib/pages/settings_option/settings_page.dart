@@ -267,19 +267,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
               Divider(),
-              ListTile(
-                title: Text(
-                  'Answer users question',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
-                ),
-                onTap: () {
-                  // Navigate to feedback page
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => QuestionsListPage())
-                  );
-                },
-              ),
-              Divider(),
+              // ListTile(
+              //   title: Text(
+              //     'Answer users question',
+              //     style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+              //   ),
+              //   onTap: () {
+              //     // Navigate to feedback page
+              //     Navigator.push(context,
+              //         MaterialPageRoute(builder: (context) => QuestionsListPage())
+              //     );
+              //   },
+              // ),
+              // Divider(),
               ListTile(
                 title: Text(
                   'FAQs',

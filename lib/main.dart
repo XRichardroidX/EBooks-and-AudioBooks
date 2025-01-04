@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:novelcity/pages/menu_screens.dart';
 import 'package:novelcity/router.dart';
 import 'package:flutter/material.dart';
-
+// import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'firebase_options.dart'; // Import universal_io for platform checks
 
 void main() async {
