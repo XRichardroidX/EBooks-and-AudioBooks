@@ -49,6 +49,10 @@ class Constants {
   static const PAYSTACK_PUBLIC_TEST_KEY = 'pk_test_b6701cd1b4df226bf77b2434ae99244d7c7f5780';
   static const PAYSTACK_SECRET_TEST_KEY = 'sk_test_adc6b961459dce45a075312db615d2a38055518f';
 
+   static const FLUTTERWAVE_PUBLIC_TEST_KEY = 'FLWPUBK_TEST-0d98744d7644f76f2dc121af98233a51-X';
+   static const FLUTTERWAVE_SECRET_TEST_KEY = 'FLWSECK_TEST-ddec1872b59198dde73db490e83c13bf-X';
+   static const FLUTTERWAVE_ENCRYPTION_TEST_KEY = 'FLWSECK_TEST6adbb718d952';
+
   // Firebase Constants
   String userId = userIdFromFirebase; // Replace with your Firebase  user ID
 }

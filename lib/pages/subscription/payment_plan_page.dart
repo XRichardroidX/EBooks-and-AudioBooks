@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:novelcity/constants/app_write_constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelcity/style/colors.dart';
@@ -8,6 +9,7 @@ import 'package:novelcity/widget/snack_bar_message.dart';
 
 class SubscriptionPage extends StatelessWidget {
   const SubscriptionPage({super.key});
+
 
   // Function to handle subscription button tap for recurring payment
   void _onSubscribeTap(BuildContext context, subType) async {
@@ -26,19 +28,32 @@ class SubscriptionPage extends StatelessWidget {
 
     final email = currentUser.email;
 
-    // Redirect user to Paystack recurring payment page
-    _redirectToPaystackRecurringPayment(context, email!, subType);
+    // Redirect user to Flutterwave recurring payment page
+    _redirectToFlutterwaveRecurringPayment(context, email!, subType);
   }
 
-  // Redirects the user to Paystack recurring payment page with their email prefilled
-  Future<void> _redirectToPaystackRecurringPayment(BuildContext context, String email, String subType) async {
+// Redirects the user to Flutterwave recurring payment page with their email prefilled
+  Future<void> _redirectToFlutterwaveRecurringPayment(BuildContext context, String email, String subType) async {
+    String publicKey = Constants.FLUTTERWAVE_PUBLIC_TEST_KEY; // Replace with your Flutterwave public key
+    String txRef = "TX-${DateTime.now().millisecondsSinceEpoch}";
+    String currency = "NGN";
+    String amount = subType == 'monthly' ? '2500' : '25000'; // Monthly or yearly amount
+    String subscriptionType = subType == 'monthly' ? 'Monthly Plan' : 'Yearly Plan';
 
-
-    String paystackUrl = subType == 'monthly' ? 'https://paystack.com/pay/kyvcpqze50' : 'https://paystack.com/pay/y6kawu2nlz';
-    final Uri paymentUri = Uri.parse('$paystackUrl?email=$email');
+    final Uri paymentUri = Uri.parse(
+      'https://checkout.flutterwave.com/v3/hosted/pay'
+          '?public_key=$publicKey'
+          '&tx_ref=$txRef'
+          '&amount=$amount'
+          '&currency=$currency'
+          '&payment_options=card,banktransfer'
+          '&redirect_url=https://www.google.com'
+          '&customer[email]=$email'
+          '&meta[subscription_type]=$subscriptionType',
+    );
 
     try {
-      // Launch the Paystack payment page
+      // Launch the Flutterwave payment page
       if (await canLaunchUrl(paymentUri)) {
         await launchUrl(paymentUri, mode: LaunchMode.externalApplication);
       } else {
@@ -54,6 +69,10 @@ class SubscriptionPage extends StatelessWidget {
       print(e.toString());
     }
   }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
